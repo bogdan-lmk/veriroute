@@ -29,10 +29,11 @@ class Deadline:
             if flush_margin_s is not None
             else float(os.environ.get("AGENT_FLUSH_MARGIN_S", "45"))
         )
+        # General rules cap response time per request at 30 s — 28 leaves margin.
         self.per_task_s = (
             per_task_s
             if per_task_s is not None
-            else float(os.environ.get("AGENT_PER_TASK_S", "30"))
+            else float(os.environ.get("AGENT_PER_TASK_S", "28"))
         )
 
     def elapsed(self) -> float:

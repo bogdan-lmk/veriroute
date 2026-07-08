@@ -75,7 +75,7 @@ Layout:
 |---|---|---|
 | `AGENT_TOTAL_BUDGET_S` | 510 | Internal wall-clock budget (grader kills at 600) |
 | `AGENT_FLUSH_MARGIN_S` | 45 | When only this much is left, drain remaining tasks in parallel |
-| `AGENT_PER_TASK_S` | 30 | Per-task time budget |
+| `AGENT_PER_TASK_S` | 28 | Per-task time budget (general rules cap responses at 30 s/request) |
 | `AGENT_TOKEN_BUDGET` | 4000 | Hard stop for Fireworks tokens (leader is 5121) |
 | `AGENT_HTTP_TIMEOUT_S` | 25 | Per-call HTTP timeout |
 | `AGENT_MAX_COMPLETION_TOKENS` | 300 | max_tokens per escalated call |

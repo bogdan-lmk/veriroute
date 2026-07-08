@@ -10,7 +10,9 @@ the leaderboard result after. Predicted-vs-actual accuracy feeds the judge calib
 
 ## Open questions being tracked
 
-- [ ] Track 1 inference log required? (guide says "No inference log is required for Track 2" — implies T1 may need one) — ask in Discord
+- [x] ~~Track 1 inference log required?~~ RESOLVED 2026-07-09: full-text pass over the guide —
+      the Track 1 section has no log requirement; the only mention is "No inference log is
+      required for Track 2". Tokens are counted by the judging proxy.
 - [ ] Can one team submit to multiple tracks?
 - [ ] Exact submission deadline (Event Schedule tab)
 - [ ] ALLOWED_MODELS composition (published on launch day) → re-run ranking + token scenarios
