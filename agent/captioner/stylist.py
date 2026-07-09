@@ -39,7 +39,7 @@ PAIR1 = (
     "formal: professional, objective, factual tone.\n"
     "sarcastic: dry, ironic, lightly mocking — understatement and deadpan "
     "beat exclamation marks.\n"
-    "Use only facts from the scene description. Reply with JSON only."
+    "Each caption under 22 words. Use only facts from the scene description. Reply with JSON only."
 )
 PAIR2 = (
     _FEWSHOT_PAIR2 +
@@ -49,7 +49,7 @@ PAIR2 = (
     "humorous_tech: witty, with a technology/programming reference that fits "
     "the scene naturally.\n"
     "humorous_non_tech: funny everyday humour, zero technical jargon.\n"
-    "Use only facts from the scene description. Reply with JSON only."
+    "Each caption under 22 words. Use only facts from the scene description. Reply with JSON only."
 )
 
 
@@ -101,7 +101,7 @@ def style_pair(local: LocalLLM, desc: str, pair: str, styles: list[str],
     for attempt, temp in enumerate((0.7, 0.4)):
         try:
             raw = local.chat(template.replace("{desc}", desc),
-                             max_tokens=120, timeout_s=budget_s,
+                             max_tokens=160, timeout_s=budget_s,
                              temperature=temp)
         except Exception as exc:  # noqa: BLE001
             log.warning("stylist %s failed (try %d): %s", pair, attempt + 1, exc)
