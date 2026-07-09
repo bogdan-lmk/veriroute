@@ -101,3 +101,15 @@ DO droplet 2vCPU/4GB, live Fireworks (minimax-only ALLOWED_MODELS):
 - sub5 (prompt-prefix prewarm at startup): 4 local / 4 esc / 1 rej, 2431 tok, 72.6s/8 tasks
 - Lesson: pushes from home uplink stall; build+push on a DO droplet takes ~3 min end-to-end.
 Image: ghcr.io/bogdan-lmk/veriroute:sub5 digest 1904124d...
+
+## duo: dual-mode container ships both tracks (2026-07-09)
+
+Input-schema dispatch: {prompt}->router, {video_url,styles}->captioner. One image, both tracks.
+- T2 pipeline (grader-worst DO vCPU, 3 example clips): 259s, all 12 captions real Gemma output.
+  Debug chain worth remembering: .format vs few-shot braces -> silent parse branch -> 30s
+  timeouts -> measured decode 3 tok/s -> structural fix: ONE all-styles call per clip
+  (halved prefills), --cache-reuse 256, caps 220/90, per-clip fallback degradation.
+- T1 regression on duo: 4 local / 4 esc / 1 rej, 2305 tokens — sub5-equivalent.
+- Eye consistency check (frames_agree) escalates drifting descriptions to minimax via baked
+  b64 key (T2 injects nothing; T1 never reads it). Local fallback keeps agent alive keyless.
+Image: ghcr.io/bogdan-lmk/veriroute:duo — submit this for BOTH tracks (Event Tracks multiselect).
