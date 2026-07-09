@@ -19,7 +19,7 @@ import os
 import signal
 import sys
 
-from . import io_utils, verifiers
+from . import io_utils, pot, verifiers
 from .classifier import classify
 from .deadline import Deadline
 from .fireworks_client import (
@@ -61,8 +61,8 @@ def _max_completion_tokens(model: str) -> int:
     return int(os.environ.get("AGENT_MAX_COMPLETION_TOKENS", "300"))
 
 
-# Phase 2 policy: only categories whose answers a cheap verifier can defend
-# run locally; everything else pays. (category -> local generation budget)
+# Only categories whose answers code can defend run locally; everything
+# else pays. (category -> local generation budget)
 LOCAL_CATEGORIES: dict[str, int] = {
     "sentiment": 110,
     "ner": 220,
@@ -73,6 +73,8 @@ LOCAL_VERIFIERS = {
     "ner": verifiers.verify_ner,
     "summarization": verifiers.verify_summarization,
 }
+# Execution-verified categories: the sandbox run IS the verifier.
+EXECUTED_CATEGORIES = ("math", "code_gen")
 
 
 class Router:
@@ -103,8 +105,26 @@ class Router:
                 self.stats["local"] += 1
                 return local_answer
             self.stats["local_rejected"] += 1
+        elif self.local_enabled and category in EXECUTED_CATEGORIES:
+            local_answer = self._try_executed(category, prompt, budget_s)
+            if local_answer is not None:
+                self.stats["local"] += 1
+                return local_answer
+            self.stats["local_rejected"] += 1
         self.stats["escalated"] += 1
         return self._escalate(prompt, budget_s)
+
+    def _try_executed(self, category: str, prompt: str, budget_s: float) -> str | None:
+        local = self.local
+        assert local is not None
+        if not local.fits_context(prompt, 300) or not local.ensure_alive():
+            if not local.alive():
+                self.local_enabled = False
+            return None
+        gen_budget = max(5.0, min(budget_s - 6.0, 20.0))  # leave exec time
+        if category == "math":
+            return pot.math_pot(local, prompt, gen_budget)
+        return pot.codegen_selftested(local, prompt, gen_budget)
 
     def _try_local(self, category: str, prompt: str, budget_s: float) -> str | None:
         """Verified local answer or None. Disables the local path for the

@@ -79,3 +79,17 @@ sentiment/NER/summarization behind deterministic verifiers; everything else esca
 - Gate context: threshold now pinned at exactly 16/19 (84.2%) — 78.9% failed, all 4 qualifiers at 84.2%
 - Leader to beat: 4,268 tokens (Route AI). sub3 projection on all-thinking ALLOWED_MODELS: ~5-6k;
   with gemma available: ~3.5-4k. Math-PoT + codegen self-tests (next) move the expensive tasks local.
+
+## sub4: execution-verified math + codegen (2026-07-09)
+
+- Math PoT: local model writes solve() -> sandbox executes. Caught a REAL wrong-but-executable
+  answer live (-60.0, then 264: few-shot example taught addition where the task meant "sold");
+  fixed with a sells-N-more few-shot + negative-count guard + one local retry. 144 stable x3 runs.
+- Codegen: ONE-shot generation (function + 3 asserts in one block; two calls would blow the 28s
+  per-task budget on grader CPU), sandbox-verified, asserts stripped from the shipped answer.
+  Flaky asserts -> rejection -> escalation is the designed safe path.
+- Sandbox: python -I, empty env, tmp cwd, 5s timeout, output cap.
+- Measured (8 practice, minimax escalations): 968-2,410 tokens depending on codegen verification
+  luck (escalated codegen on minimax costs ~900). vs sub2 3,573 / sub3 2,729.
+- 92 tests. Escalated categories remaining: factual, logic, code_debug.
+- Images: sub3 (cascade phase 1), sub4 (=sub3 + math/codegen execution) — both public, pull verified.
