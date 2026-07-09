@@ -5,3 +5,5 @@ __pycache__/
 *.gguf
 .env
 uv.lock
+media/*.html
+media/slide*.png
