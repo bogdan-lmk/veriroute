@@ -76,17 +76,9 @@ class Eye:
             except Exception as exc:  # noqa: BLE001
                 log.warning("local describe failed: %s", exc)
         if descs and frames_agree(descs):
-            if len(descs) == 1:
-                return descs[0], "local"
-            try:
-                merged = self.local.chat(
-                    MERGE_PROMPT.format(descs="\n".join(
-                        f"{i+1}. {d}" for i, d in enumerate(descs))),
-                    max_tokens=120, timeout_s=per_frame,
-                )
-                return (merged.strip() or descs[0]), "local"
-            except Exception:  # noqa: BLE001
-                return descs[0], "local"
+            # Frames agree -> the most detailed description carries the most
+            # usable facts; a merge call would cost ~8s of 2-vCPU time per clip.
+            return max(descs, key=len), "local"
         log.info("frame descriptions disagree -> escalate eye")
         escalated = self._escalate(frames_b64[:2])
         if escalated:

@@ -57,7 +57,7 @@ def _write(answers: dict[str, dict[str, str]]) -> None:
 
 
 def run(tasks: list[dict]) -> int:
-    deadline = Deadline(per_task_s=45.0)
+    deadline = Deadline(per_task_s=60.0)
     answers = {
         t["task_id"]: {s: STUB for s in t.get("styles") or list(STYLES)}
         for t in tasks
@@ -94,7 +94,7 @@ def run(tasks: list[dict]) -> int:
             clip = clip_futures[tid].result(timeout=max(5.0, deadline.task_budget()))
             if clip is None:
                 continue
-            frame_list = frames_mod.extract_frames(clip, count=3)
+            frame_list = frames_mod.extract_frames(clip, count=2)
             if not frame_list:
                 continue
             if eye_ok:
@@ -116,7 +116,8 @@ def run(tasks: list[dict]) -> int:
     )
     gemma_ok = gemma.available and gemma.start()
     if gemma_ok:
-        gemma.prewarm()
+        from .stylist import prompt_prefixes
+        gemma.prewarm(prefixes=prompt_prefixes())
     for task in tasks:
         tid = task["task_id"]
         desc = descriptions.get(tid)

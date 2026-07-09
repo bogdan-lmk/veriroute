@@ -77,11 +77,17 @@ def fallback_caption(desc: str, style: str) -> str:
     }[style]
 
 
+def prompt_prefixes() -> list[str]:
+    """Constant prompt prefixes to prewarm into the Gemma server's cache —
+    without this each styled call pays ~10s of prefill on 2 grader vCPUs."""
+    return [PAIR1.split("{desc}")[0], PAIR2.split("{desc}")[0]]
+
+
 def style_captions(local: LocalLLM, desc: str, styles: list[str],
                    budget_s: float) -> dict[str, str]:
     """All requested styles via the two-pair calls, with retries + fallbacks."""
     out: dict[str, str] = {}
-    per_call = max(6.0, budget_s / 2)
+    per_call = max(12.0, budget_s / 2)
     for template, keys in ((PAIR1, ("formal", "sarcastic")),
                            (PAIR2, ("humorous_tech", "humorous_non_tech"))):
         wanted = tuple(k for k in keys if k in styles)
