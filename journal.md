@@ -68,3 +68,14 @@ Competitive intel from neighboring submissions: verification-cascade is now the 
 ("prove or escalate", "local first + verify", claims of 2/3 tasks at zero tokens) — BUT the
 loudest competitor (TokenRouter prove-or-escalate) sits at ACCURACY_GATE_FAILED 0.0% on the
 leaderboard. Strategy is table stakes; execution through the gate is the differentiator.
+
+## sub3: local cascade phase 1 (2026-07-09)
+
+One logical change vs sub2: local Qwen2.5-1.5B (llama.cpp, in-image) answers
+sentiment/NER/summarization behind deterministic verifiers; everything else escalates.
+- Native run, 8 practice tasks: 3 local / 5 escalated, 2,729 tokens (-24% vs sub2's 3,573)
+- Container smoke under 4g/2cpu (Rosetta): local path works even emulated, ~10s/task
+- Deterministic classifier: 77 tests, conservative fallbacks (multi-part/non-English/no-match → escalate)
+- Gate context: threshold now pinned at exactly 16/19 (84.2%) — 78.9% failed, all 4 qualifiers at 84.2%
+- Leader to beat: 4,268 tokens (Route AI). sub3 projection on all-thinking ALLOWED_MODELS: ~5-6k;
+  with gemma available: ~3.5-4k. Math-PoT + codegen self-tests (next) move the expensive tasks local.

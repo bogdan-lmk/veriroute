@@ -9,5 +9,5 @@ docs
 Makefile
 README.md
 journal.md
-*.gguf
+media
 .env

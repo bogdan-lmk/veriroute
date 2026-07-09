@@ -19,7 +19,8 @@ import os
 import signal
 import sys
 
-from . import io_utils
+from . import io_utils, verifiers
+from .classifier import classify
 from .deadline import Deadline
 from .fireworks_client import (
     DisallowedModelError,
@@ -28,6 +29,7 @@ from .fireworks_client import (
     TokenMeter,
     TransientAPIError,
 )
+from .local_llm import LocalLLM
 from .model_ranking import (
     is_thinking_likely,
     parse_allowed_models,
@@ -59,18 +61,79 @@ def _max_completion_tokens(model: str) -> int:
     return int(os.environ.get("AGENT_MAX_COMPLETION_TOKENS", "300"))
 
 
-class Router:
-    """Escalate-all baseline: every task goes to the best allowed model."""
+# Phase 2 policy: only categories whose answers a cheap verifier can defend
+# run locally; everything else pays. (category -> local generation budget)
+LOCAL_CATEGORIES: dict[str, int] = {
+    "sentiment": 110,
+    "ner": 220,
+    "summarization": 140,
+}
+LOCAL_VERIFIERS = {
+    "sentiment": verifiers.verify_sentiment,
+    "ner": verifiers.verify_ner,
+    "summarization": verifiers.verify_summarization,
+}
 
-    def __init__(self, client: FireworksClient, models: list[str]):
+
+class Router:
+    """Local-first cascade: verified local answers are free; only proven
+    failures and unverifiable categories escalate to Fireworks."""
+
+    def __init__(
+        self,
+        client: FireworksClient,
+        models: list[str],
+        local: LocalLLM | None = None,
+    ):
         self.client = client
         self.models = list(models)  # ranked best-first, demoted in place
         self._demoted: set[str] = set()
+        self.local = local
+        self.local_enabled = local is not None
+        self.stats = {"local": 0, "escalated": 0, "local_rejected": 0}
 
     def answer(self, prompt: str, budget_s: float) -> str:
         """One task. Never raises; returns a stub on any failure."""
         if not prompt.strip():
             return STUB_ANSWER
+        category = classify(prompt)
+        if self.local_enabled and category in LOCAL_CATEGORIES:
+            local_answer = self._try_local(category, prompt, budget_s)
+            if local_answer is not None:
+                self.stats["local"] += 1
+                return local_answer
+            self.stats["local_rejected"] += 1
+        self.stats["escalated"] += 1
+        return self._escalate(prompt, budget_s)
+
+    def _try_local(self, category: str, prompt: str, budget_s: float) -> str | None:
+        """Verified local answer or None. Disables the local path for the
+        rest of the run if the server dies twice."""
+        gen_budget = LOCAL_CATEGORIES[category]
+        local = self.local
+        assert local is not None
+        if not local.fits_context(prompt, gen_budget):
+            log.info("local skip (%s): prompt exceeds local context", category)
+            return None
+        if not local.ensure_alive():
+            log.error("llama-server dead after restart; disabling local path")
+            self.local_enabled = False
+            return None
+        try:
+            answer = local.chat(
+                prompt, max_tokens=gen_budget,
+                timeout_s=max(5.0, min(budget_s - 2.0, 20.0)),
+            ).strip()
+        except Exception as exc:  # noqa: BLE001 - local failure just escalates
+            log.warning("local inference failed (%s): %s", category, exc)
+            return None
+        if answer and LOCAL_VERIFIERS[category](prompt, answer):
+            log.info("local answer accepted (%s)", category)
+            return answer
+        log.info("local answer rejected by verifier (%s)", category)
+        return None
+
+    def _escalate(self, prompt: str, budget_s: float) -> str:
         for model in self.models:
             if model in self._demoted:
                 continue
@@ -142,16 +205,27 @@ def run() -> int:
         allowed_models=allowed,
         meter=meter,
     )
-    if not client.usable:
+
+    # --- Local model: free answers where verifiers can defend them ---
+    local: LocalLLM | None = LocalLLM()
+    if local.available and local.start():
+        local.prewarm()
+    else:
+        local = None
+
+    if not client.usable and local is None:
         log.error(
-            "Fireworks not usable (base_url=%r, %d allowed models); "
-            "keeping stub answers",
+            "neither Fireworks (base_url=%r, %d models) nor local model "
+            "usable; keeping stub answers",
             client.base_url, len(allowed),
         )
         return 0
 
-    router = Router(client, rank_models(allowed))
-    log.info("model escalation order: %s", router.models)
+    router = Router(client, rank_models(allowed), local=local)
+    log.info(
+        "model escalation order: %s | local model: %s",
+        router.models, "on" if local else "off",
+    )
 
     # --- Sequential pass with per-task budget ---
     pending = list(tasks)
@@ -200,9 +274,13 @@ def run() -> int:
                     fut.cancel()
         io_utils.write_results_atomic(answers)
 
+    if local is not None:
+        local.stop()
     log.info(
-        "done: %d tasks, %d fireworks calls, %d prompt + %d completion = %d tokens, %.1fs elapsed",
-        len(tasks), meter.calls, meter.prompt_tokens,
+        "done: %d tasks (%d local / %d escalated / %d local-rejected), "
+        "%d fireworks calls, %d prompt + %d completion = %d tokens, %.1fs elapsed",
+        len(tasks), router.stats["local"], router.stats["escalated"],
+        router.stats["local_rejected"], meter.calls, meter.prompt_tokens,
         meter.completion_tokens, meter.total, deadline.elapsed(),
     )
     return 0

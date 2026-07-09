@@ -32,6 +32,8 @@ RUN if ldd /app/llama/llama-server | grep -q "not found"; then \
     fi
 
 COPY agent/ /app/agent/
+# The local model: answers verified by code cost zero tokens by the rules.
+COPY models/qwen2.5-1.5b-instruct-q4_k_m.gguf /app/model.gguf
 WORKDIR /app
 
 # Exec form: python is PID 1 and receives SIGTERM directly.
