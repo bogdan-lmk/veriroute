@@ -22,6 +22,17 @@ class TestFramesAgree:
         assert frames_agree(["A dog runs."])
 
 
+class TestStylistTemplates:
+    def test_replace_substitution_survives_fewshot_braces(self):
+        """Regression: .format() blew up on few-shot JSON braces (KeyError)."""
+        from agent.captioner.stylist import PAIR1, PAIR2
+        for template in (PAIR1, PAIR2):
+            rendered = template.replace("{desc}", "A dog runs.")
+            assert "A dog runs." in rendered
+            assert "{desc}" not in rendered
+            assert '"formal"' in rendered or '"humorous_tech"' in rendered
+
+
 class TestStylistParsing:
     def test_extract_valid(self):
         raw = 'text {"formal": "A river flows through the forest.", ' \

@@ -29,11 +29,13 @@ _FEWSHOT_PAIR2 = (
     'kitten forgot what it was hunting."}\n\n'
 )
 
+# NOTE: substituted via str.replace, NOT str.format — the few-shot examples
+# contain literal JSON braces that .format() would treat as placeholders.
 PAIR1 = (
     _FEWSHOT_PAIR1 +
     "Video scene: {desc}\n\n"
     "Write two one-sentence captions for this video as JSON "
-    '{{"formal": "...", "sarcastic": "..."}}.\n'
+    '{"formal": "...", "sarcastic": "..."}.\n'
     "formal: professional, objective, factual tone.\n"
     "sarcastic: dry, ironic, lightly mocking — understatement and deadpan "
     "beat exclamation marks.\n"
@@ -43,7 +45,7 @@ PAIR2 = (
     _FEWSHOT_PAIR2 +
     "Video scene: {desc}\n\n"
     "Write two funny one-sentence captions for this video as JSON "
-    '{{"humorous_tech": "...", "humorous_non_tech": "..."}}.\n'
+    '{"humorous_tech": "...", "humorous_non_tech": "..."}.\n'
     "humorous_tech: witty, with a technology/programming reference that fits "
     "the scene naturally.\n"
     "humorous_non_tech: funny everyday humour, zero technical jargon.\n"
@@ -88,7 +90,7 @@ def style_captions(local: LocalLLM, desc: str, styles: list[str],
         parsed = None
         for attempt, temp in enumerate((0.7, 0.4)):
             try:
-                raw = local.chat(template.format(desc=desc),
+                raw = local.chat(template.replace("{desc}", desc),
                                  max_tokens=220, timeout_s=per_call,
                                  temperature=temp)
             except Exception as exc:  # noqa: BLE001
