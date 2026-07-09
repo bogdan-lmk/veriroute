@@ -26,3 +26,18 @@ the leaderboard result after. Predicted-vs-actual accuracy feeds the judge calib
 - [ ] Exact submission deadline (Event Schedule tab)
 - [ ] ALLOWED_MODELS composition (published on launch day) → re-run ranking + token scenarios
 - [ ] Confirm eval-set size ≈ 19 via submission #1 accuracy granularity
+
+## ALLOWED_MODELS intel (2026-07-09)
+
+Probable final Track 1 list, cross-confirmed in two participant repos
+(Ruththra/AI-Agent README "Final Track 1 Allowed Models" + omerdduran/token-router .env.example):
+`minimax-m3, kimi-k2p7-code, gemma-4-31b-it, gemma-4-26b-a4b-it, gemma-4-31b-it-nvfp4`.
+
+- Gemma-heavy list → Track 1 Gemma prize ($1000 Best Use of Gemma via Fireworks) is in play
+  automatically: our top-ranked escalation target is gemma-4-31b-it.
+- Our ranking orders it correctly (locked by test_actual_track1_list_ordering).
+- Gemma-4 models 404 on a personal Fireworks account (deployed only behind the judging proxy);
+  live run validated the demotion path: 3x404 → minimax-m3 answered 8/8 cleanly, no
+  reasoning leakage in content, ~3065 tokens (thinking model ≈ +44% vs gpt-oss baseline).
+- Deadline signal from web: event "runs to 11 July 2026" — CONFIRM in Event Schedule;
+  if true, freeze criterion (T-24h) lands 2026-07-10.

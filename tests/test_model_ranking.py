@@ -102,3 +102,23 @@ class TestRanking:
     def test_unknown_names_do_not_crash(self):
         junk = ["x", "a/b/c", "MODEL", "123", "-,-"]
         assert sorted(rank_models(junk)) == sorted(junk)
+
+    def test_actual_track1_list_ordering(self):
+        """The (probable) real Track 1 set, cross-confirmed in two participant
+        repos: Gemma-4 non-thinking models must outrank the thinking pair,
+        and minimax must outrank kimi (matches real output-token pricing)."""
+        real = [
+            f"{PREFIX}minimax-m3",
+            f"{PREFIX}kimi-k2p7-code",
+            f"{PREFIX}gemma-4-31b-it",
+            f"{PREFIX}gemma-4-26b-a4b-it",
+            f"{PREFIX}gemma-4-31b-it-nvfp4",
+        ]
+        names = [m.rsplit("/", 1)[-1] for m in rank_models(real)]
+        assert names == [
+            "gemma-4-31b-it",
+            "gemma-4-31b-it-nvfp4",
+            "gemma-4-26b-a4b-it",
+            "minimax-m3",
+            "kimi-k2p7-code",
+        ]
