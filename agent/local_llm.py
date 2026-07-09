@@ -80,6 +80,9 @@ class LocalLLM:
             "-c", str(self.ctx),
             "--parallel", "1",
             "--jinja",
+            # Without --cache-reuse the server saves prompt KV but never
+            # reuses partial prefixes; measured cached=1 token per call.
+            "--cache-reuse", "256",
         ]
         if self.mmproj_path:
             cmd += ["--mmproj", self.mmproj_path]

@@ -57,7 +57,8 @@ def _write(answers: dict[str, dict[str, str]]) -> None:
 
 
 def run(tasks: list[dict]) -> int:
-    deadline = Deadline(per_task_s=60.0)
+    # T2 has no external flush drain to pay for — use more of the 600s cap.
+    deadline = Deadline(total_s=560.0, flush_margin_s=30.0, per_task_s=60.0)
     answers = {
         t["task_id"]: {s: STUB for s in t.get("styles") or list(STYLES)}
         for t in tasks
