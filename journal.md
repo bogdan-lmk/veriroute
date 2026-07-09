@@ -93,3 +93,11 @@ sentiment/NER/summarization behind deterministic verifiers; everything else esca
   luck (escalated codegen on minimax costs ~900). vs sub2 3,573 / sub3 2,729.
 - 92 tests. Escalated categories remaining: factual, logic, code_debug.
 - Images: sub3 (cascade phase 1), sub4 (=sub3 + math/codegen execution) — both public, pull verified.
+
+## sub5 verified on grader-class x86 (2026-07-09)
+
+DO droplet 2vCPU/4GB, live Fireworks (minimax-only ALLOWED_MODELS):
+- sub4: 3 local / 5 esc / 2 rej, 2695 tok — math+codegen killed by prefill in 20s window
+- sub5 (prompt-prefix prewarm at startup): 4 local / 4 esc / 1 rej, 2431 tok, 72.6s/8 tasks
+- Lesson: pushes from home uplink stall; build+push on a DO droplet takes ~3 min end-to-end.
+Image: ghcr.io/bogdan-lmk/veriroute:sub5 digest 1904124d...
