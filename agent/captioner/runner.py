@@ -7,7 +7,7 @@ deadlines, exit 0 always.
 """
 from __future__ import annotations
 
-import base64
+
 import concurrent.futures
 import json
 import logging
@@ -26,22 +26,19 @@ log = logging.getLogger("agent.captioner")
 STUB = "A short video clip."
 
 
-def _decode_baked(value: str | None) -> str | None:
-    if not value:
-        return None
-    try:
-        return base64.b64decode(value).decode()
-    except Exception:  # noqa: BLE001
-        return None
-
-
 def _fireworks_creds() -> tuple[str | None, str]:
-    """Env first (dev); baked fallback (grading — T2 injects nothing).
-    Never used by the Track 1 path, which sees harness-injected env only."""
-    key = os.environ.get("FIREWORKS_API_KEY") or _decode_baked(
-        os.environ.get("BAKED_FW_KEY_B64"))
-    url = os.environ.get("FIREWORKS_BASE_URL") or "https://api.fireworks.ai/inference/v1"
-    return key, url
+    """No secrets ship in the public image. Dev runs use env creds; graded
+    runs use our escalation relay (URL only — the key lives on our box and
+    dies with it). Relay unreachable -> the eye's local fallback covers it."""
+    key = os.environ.get("FIREWORKS_API_KEY")
+    if key:
+        url = os.environ.get("FIREWORKS_BASE_URL",
+                             "https://api.fireworks.ai/inference/v1")
+        return key, url
+    relay = os.environ.get("ESCALATION_RELAY_URL")
+    if relay:
+        return "relay", relay  # non-secret placeholder token
+    return None, ""
 
 
 def _write(answers: dict[str, dict[str, str]]) -> None:

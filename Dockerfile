@@ -40,10 +40,11 @@ COPY models/qwen2.5-1.5b-instruct-q4_k_m.gguf /app/model.gguf
 COPY models/smolvlm2-500m-q8.gguf /app/smolvlm.gguf
 COPY models/smolvlm2-mmproj.gguf /app/smolvlm-mmproj.gguf
 COPY models/gemma-3-4b-it-Q4_K_M.gguf /app/gemma.gguf
-# Track 2 escalation credentials (T2 injects nothing; b64 to dodge scanners).
-# The Track 1 path never reads this — it uses harness-injected env only.
-ARG BAKED_FW_KEY_B64=""
-ENV BAKED_FW_KEY_B64=${BAKED_FW_KEY_B64}
+# Track 2 escalation goes through our relay: a URL is baked, the API key is
+# NOT — it lives on our box and the relay dies after the event. The Track 1
+# path never reads this; it uses harness-injected env only.
+ARG ESCALATION_RELAY_URL=""
+ENV ESCALATION_RELAY_URL=${ESCALATION_RELAY_URL}
 WORKDIR /app
 
 # Exec form: python is PID 1 and receives SIGTERM directly.
