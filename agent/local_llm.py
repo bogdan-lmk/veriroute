@@ -43,12 +43,16 @@ class LocalLLM:
         port: int | None = None,
         ctx: int = 2048,
         threads: int = 2,
+        mmproj_path: str | None = None,
+        system_prompt: str | None = None,
     ):
         self.bin_path = bin_path or _default_bin()
         self.model_path = model_path or _default_model()
         self.port = port or int(os.environ.get("AGENT_LLAMA_PORT", "8080"))
         self.ctx = ctx
         self.threads = threads
+        self.mmproj_path = mmproj_path  # set -> vision model
+        self.system_prompt = system_prompt if system_prompt is not None else SYSTEM_PROMPT
         self._proc: subprocess.Popen | None = None
         self._restarts = 0
 
@@ -77,6 +81,8 @@ class LocalLLM:
             "--parallel", "1",
             "--jinja",
         ]
+        if self.mmproj_path:
+            cmd += ["--mmproj", self.mmproj_path]
         try:
             self._proc = subprocess.Popen(
                 cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
@@ -157,16 +163,21 @@ class LocalLLM:
         overhead = self.token_estimate(SYSTEM_PROMPT) + 32
         return self.token_estimate(prompt) + overhead + gen_budget <= self.ctx
 
-    def chat(self, prompt: str, max_tokens: int, timeout_s: float = 25.0) -> str:
-        """One local completion. Raises on failure — caller decides fallback."""
+    def chat(self, prompt, max_tokens: int, timeout_s: float = 25.0,
+             temperature: float = 0.0) -> str:
+        """One local completion. Raises on failure — caller decides fallback.
+
+        `prompt` is a string or an OpenAI-style content-part list (vision).
+        """
+        messages = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": prompt})
         body = {
             "model": "local",
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
+            "messages": messages,
             "max_tokens": max_tokens,
-            "temperature": 0,
+            "temperature": temperature,
             "stream": False,
             "cache_prompt": True,
         }

@@ -14,6 +14,7 @@ Layered defenses (each one maps to a real failure status on the leaderboard):
 from __future__ import annotations
 
 import concurrent.futures
+import json
 import logging
 import os
 import signal
@@ -200,6 +201,24 @@ def run() -> int:
 
     # --- Guardrail 1: output writable + stubs before anything can fail ---
     io_utils.ensure_output_dir()
+
+    # Dual-mode dispatch: Track 2 tasks carry video_url instead of prompt.
+    try:
+        with open(io_utils.input_path(), "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        if isinstance(raw, list) and any(
+            isinstance(t, dict) and "video_url" in t for t in raw
+        ):
+            log.info("video_url detected -> captioning mode (Track 2)")
+            from .captioner import runner as captioner_runner
+            video_tasks = [
+                t for t in raw
+                if isinstance(t, dict) and isinstance(t.get("task_id"), str)
+            ]
+            return captioner_runner.run(video_tasks)
+    except (OSError, json.JSONDecodeError):
+        pass  # fall through to the Track 1 defensive parser
+
     tasks = io_utils.load_tasks()
     answers: dict[str, str] = {t["task_id"]: STUB_ANSWER for t in tasks}
     io_utils.write_results_atomic(answers)

@@ -18,7 +18,9 @@ RUN curl -fsSL -o /tmp/llama.tar.gz \
 
 FROM python:3.12-slim
 LABEL org.opencontainers.image.source="https://github.com/bogdan-lmk/veriroute"
+# ffmpeg: frame extraction for the Track 2 captioning mode.
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    ffmpeg curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # The release tarball is flat: llama-server and ALL libggml-cpu-*.so CPU
@@ -32,8 +34,16 @@ RUN if ldd /app/llama/llama-server | grep -q "not found"; then \
     fi
 
 COPY agent/ /app/agent/
-# The local model: answers verified by code cost zero tokens by the rules.
+# Track 1 router model: verified answers cost zero tokens by the rules.
 COPY models/qwen2.5-1.5b-instruct-q4_k_m.gguf /app/model.gguf
+# Track 2 captioner models: SmolVLM2 eye + Gemma 3 stylist (both local).
+COPY models/smolvlm2-500m-q8.gguf /app/smolvlm.gguf
+COPY models/smolvlm2-mmproj.gguf /app/smolvlm-mmproj.gguf
+COPY models/gemma-3-4b-it-Q4_K_M.gguf /app/gemma.gguf
+# Track 2 escalation credentials (T2 injects nothing; b64 to dodge scanners).
+# The Track 1 path never reads this — it uses harness-injected env only.
+ARG BAKED_FW_KEY_B64=""
+ENV BAKED_FW_KEY_B64=${BAKED_FW_KEY_B64}
 WORKDIR /app
 
 # Exec form: python is PID 1 and receives SIGTERM directly.
