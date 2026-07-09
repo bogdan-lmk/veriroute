@@ -69,7 +69,7 @@ class Eye:
                     [{"type": "image_url",
                       "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
                      {"type": "text", "text": DESCRIBE}],
-                    max_tokens=100, timeout_s=per_frame,
+                    max_tokens=90, timeout_s=per_frame,
                 )
                 if d.strip():
                     descs.append(d.strip())

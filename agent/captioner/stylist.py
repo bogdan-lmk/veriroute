@@ -101,7 +101,7 @@ def style_pair(local: LocalLLM, desc: str, pair: str, styles: list[str],
     for attempt, temp in enumerate((0.7, 0.4)):
         try:
             raw = local.chat(template.replace("{desc}", desc),
-                             max_tokens=220, timeout_s=budget_s,
+                             max_tokens=120, timeout_s=budget_s,
                              temperature=temp)
         except Exception as exc:  # noqa: BLE001
             log.warning("stylist %s failed (try %d): %s", pair, attempt + 1, exc)
