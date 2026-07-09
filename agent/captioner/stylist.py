@@ -1,7 +1,9 @@
-"""The stylist: Gemma 3 4B writes all four captions (two few-shot calls).
+"""The stylist: Gemma 3 4B writes all four captions in ONE call per clip.
 
 Few-shot beat both LoRA arms in the blind bake-off (style 7.75 vs 7.38/7.50)
-at zero weight cost — see gemmacap/training/bakeoff.py.
+at zero weight cost — see gemmacap/training/bakeoff.py. One call per clip
+because decode dominates on 2 grader vCPUs (~3-6 tok/s): halving the number
+of calls/prefills is the difference between fitting the 10-minute cap or not.
 """
 from __future__ import annotations
 
@@ -15,41 +17,24 @@ log = logging.getLogger("agent.captioner.stylist")
 
 STYLES = ("formal", "sarcastic", "humorous_tech", "humorous_non_tech")
 
-_FEWSHOT_PAIR1 = (
-    'Example scene: A river winds through a dense forest.\n'
-    'Example output: {"formal": "A river winds through a dense forest, '
-    'bordered by tall trees.", "sarcastic": "A river, boldly committing to '
-    'the one direction it was always going to take."}\n\n'
-)
-_FEWSHOT_PAIR2 = (
+# NOTE: substituted via str.replace, NOT str.format — the few-shot example
+# contains literal JSON braces that .format() would treat as placeholders.
+ALL_STYLES_PROMPT = (
     'Example scene: A small orange kitten walks through green foliage.\n'
-    'Example output: {"humorous_tech": "The kitten patrols the undergrowth '
-    'like a garbage collector hunting unreferenced mice.", '
+    'Example output: {"formal": "A small orange kitten walks through dense '
+    'green foliage.", "sarcastic": "A kitten, boldly going where thousands '
+    'of kittens have gone before.", "humorous_tech": "The kitten patrols the '
+    'undergrowth like a garbage collector hunting unreferenced mice.", '
     '"humorous_non_tech": "Somewhere between the second and third leaf, the '
     'kitten forgot what it was hunting."}\n\n'
-)
-
-# NOTE: substituted via str.replace, NOT str.format — the few-shot examples
-# contain literal JSON braces that .format() would treat as placeholders.
-PAIR1 = (
-    _FEWSHOT_PAIR1 +
     "Video scene: {desc}\n\n"
-    "Write two one-sentence captions for this video as JSON "
-    '{"formal": "...", "sarcastic": "..."}.\n'
-    "formal: professional, objective, factual tone.\n"
-    "sarcastic: dry, ironic, lightly mocking — understatement and deadpan "
-    "beat exclamation marks.\n"
-    "Each caption under 22 words. Use only facts from the scene description. Reply with JSON only."
-)
-PAIR2 = (
-    _FEWSHOT_PAIR2 +
-    "Video scene: {desc}\n\n"
-    "Write two funny one-sentence captions for this video as JSON "
-    '{"humorous_tech": "...", "humorous_non_tech": "..."}.\n'
-    "humorous_tech: witty, with a technology/programming reference that fits "
-    "the scene naturally.\n"
-    "humorous_non_tech: funny everyday humour, zero technical jargon.\n"
-    "Each caption under 22 words. Use only facts from the scene description. Reply with JSON only."
+    "Write four one-sentence captions for this video as JSON with keys "
+    "formal, sarcastic, humorous_tech, humorous_non_tech.\n"
+    "formal: professional, objective. sarcastic: dry, deadpan, no "
+    "exclamations. humorous_tech: witty with a natural technology reference. "
+    "humorous_non_tech: relatable everyday humour, no tech jargon.\n"
+    "Each caption under 20 words, facts only from the scene. "
+    "Reply with the raw JSON object only, no markdown fences."
 )
 
 
@@ -77,39 +62,29 @@ def fallback_caption(desc: str, style: str) -> str:
     }[style]
 
 
-def prompt_prefixes() -> list[str]:
-    """Constant prompt prefixes to prewarm into the Gemma server's cache —
-    without this each styled call pays ~10s of prefill on 2 grader vCPUs."""
-    return [PAIR1.split("{desc}")[0], PAIR2.split("{desc}")[0]]
+def prompt_prefix() -> str:
+    """Constant prompt prefix to prewarm into the Gemma server's cache."""
+    return ALL_STYLES_PROMPT.split("{desc}")[0]
 
 
-PAIRS: dict[str, tuple[str, tuple[str, ...]]] = {
-    "pair1": (PAIR1, ("formal", "sarcastic")),
-    "pair2": (PAIR2, ("humorous_tech", "humorous_non_tech")),
-}
-
-
-def style_pair(local: LocalLLM, desc: str, pair: str, styles: list[str],
-               budget_s: float) -> dict[str, str]:
-    """One pair for one clip. Callers batch all clips per pair so the
-    llama-server prompt cache stays hot (one cache slot = one prefix)."""
-    template, keys = PAIRS[pair]
-    wanted = tuple(k for k in keys if k in styles)
+def style_all(local: LocalLLM, desc: str, styles: list[str],
+              budget_s: float) -> dict[str, str]:
+    """All requested styles in one generation; per-style fallbacks on failure."""
+    wanted = tuple(k for k in STYLES if k in styles)
     if not wanted:
         return {}
     parsed = None
     for attempt, temp in enumerate((0.7, 0.4)):
         try:
-            raw = local.chat(template.replace("{desc}", desc),
-                             max_tokens=160, timeout_s=budget_s,
+            raw = local.chat(ALL_STYLES_PROMPT.replace("{desc}", desc),
+                             max_tokens=220, timeout_s=budget_s,
                              temperature=temp)
         except Exception as exc:  # noqa: BLE001
-            log.warning("stylist %s failed (try %d): %s", pair, attempt + 1, exc)
+            log.warning("stylist failed (try %d): %s", attempt + 1, exc)
             continue
-        parsed = _extract(raw, keys)
+        parsed = _extract(raw, wanted)
         if parsed:
             break
-        log.warning("stylist %s parse failed (try %d): %r",
-                    pair, attempt + 1, raw[:160])
+        log.warning("stylist parse failed (try %d): %r", attempt + 1, raw[:160])
     return {k: parsed[k].strip() if parsed else fallback_caption(desc, k)
             for k in wanted}
