@@ -26,8 +26,10 @@ smoke: build
 
 # Run the agent locally against the practice tasks with your own
 # Fireworks credentials (development only — the grader injects its own).
+# Loads .env automatically if present (FIREWORKS_API_KEY / FIREWORKS_BASE_URL / ALLOWED_MODELS).
 run-practice:
 	mkdir -p /tmp/veriroute-local
+	set -a; [ -f .env ] && . ./.env; set +a; \
 	AGENT_INPUT_PATH=eval/practice_tasks.json \
 	AGENT_OUTPUT_PATH=/tmp/veriroute-local/results.json \
 	uv run python -m agent.main
