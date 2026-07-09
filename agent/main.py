@@ -28,14 +28,34 @@ from .fireworks_client import (
     TokenMeter,
     TransientAPIError,
 )
-from .model_ranking import parse_allowed_models, rank_models, supports_reasoning_effort
+from .model_ranking import (
+    is_thinking_likely,
+    parse_allowed_models,
+    rank_models,
+    supports_reasoning_effort,
+)
 
 log = logging.getLogger("agent.main")
 
 STUB_ANSWER = ""
 
+# Multi-part questions die to verbosity, not to model weakness: the model
+# spends its budget on preamble and never reaches the second sub-question.
+TERSE_SUFFIX = (
+    "\n\nAnswer directly and completely. Address every part of the question. "
+    "No preamble, no restating the question."
+)
 
-def _max_completion_tokens() -> int:
+
+def _max_completion_tokens(model: str) -> int:
+    """Thinking models bill hidden reasoning as completion tokens — a tight
+    cap silently truncates their visible answer (observed live: 3/8 answers
+    cut at 300). Give them headroom; keep non-thinking models tight."""
+    if is_thinking_likely(model):
+        # Measured live on minimax-m3 (8 practice tasks): cap 600 starved
+        # codegen (empty content -> paid retry, 4411 total); cap 1000 kept
+        # every answer intact at 3573 total. Reasoning models need headroom.
+        return int(os.environ.get("AGENT_MAX_TOKENS_THINKING", "1000"))
     return int(os.environ.get("AGENT_MAX_COMPLETION_TOKENS", "300"))
 
 
@@ -51,24 +71,24 @@ class Router:
         """One task. Never raises; returns a stub on any failure."""
         if not prompt.strip():
             return STUB_ANSWER
-        max_tokens = _max_completion_tokens()
         for model in self.models:
             if model in self._demoted:
                 continue
             if self.client.meter.exhausted():
                 log.warning("token budget exhausted, stubbing remaining work")
                 return STUB_ANSWER
+            max_tokens = _max_completion_tokens(model)
             effort = "low" if supports_reasoning_effort(model) else None
             try:
                 result = self.client.chat(
-                    model, prompt, max_tokens,
+                    model, prompt + TERSE_SUFFIX, max_tokens,
                     reasoning_effort=effort, timeout_s=budget_s,
                 )
                 if result.truncated and not self.client.meter.exhausted():
                     # Reasoning ate the whole budget: exactly one paid retry.
                     log.warning("%s truncated by reasoning, one retry x2 tokens", model)
                     result = self.client.chat(
-                        model, prompt, max_tokens * 2,
+                        model, prompt + TERSE_SUFFIX, max_tokens * 2,
                         reasoning_effort=effort, timeout_s=budget_s,
                     )
                 answer = result.content.strip()
@@ -150,8 +170,12 @@ def run() -> int:
     # --- Guardrail 4: parallel drain of the remainder inside the margin ---
     if pending:
         log.warning("draining %d unfinished tasks in parallel", len(pending))
-        max_tokens = _max_completion_tokens()
-        affordable = max(0, (meter.budget - meter.total) // max_tokens)
+        # Conservative affordability: assume every drained task pays the
+        # thinking-model cap, so the token budget can never be overshot.
+        worst_case_tokens = max(
+            _max_completion_tokens(m) for m in router.models
+        ) if router.models else 1
+        affordable = max(0, (meter.budget - meter.total) // worst_case_tokens)
         to_escalate, to_stub = pending[:affordable], pending[affordable:]
         if to_stub:
             log.warning("%d tasks stubbed to respect the token budget", len(to_stub))

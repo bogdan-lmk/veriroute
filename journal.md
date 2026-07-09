@@ -41,3 +41,19 @@ Probable final Track 1 list, cross-confirmed in two participant repos
   reasoning leakage in content, ~3065 tokens (thinking model ≈ +44% vs gpt-oss baseline).
 - Deadline signal from web: event "runs to 11 July 2026" — CONFIRM in Event Schedule;
   if true, freeze criterion (T-24h) lands 2026-07-10.
+
+## sub2 policy change (2026-07-09): escalation output policy
+
+Official tutorial intel (lablab fine-tune-query-router guide): Participant FAQ names
+**MiniMax and Kimi K series** as the allowed Fireworks models → all-thinking ALLOWED_MODELS
+is now the BASE scenario, not worst case. Local-model phase = critical path.
+
+One logical change vs sub1 — escalation output policy, measured live on minimax-m3, 8 practice tasks:
+| config | tokens | answers intact |
+|---|---|---|
+| cap300, no terse (sub1) | 3065 | 5/8 (3 truncated mid-content) |
+| terse + thinking-cap 600 | 4411 | 8/8 but codegen paid retry |
+| terse + thinking-cap 1000 (sub2) | 3573 | 8/8 |
+
+TERSE_SUFFIX cut simple-task completions ~40-60%; thinking cap 1000 avoids the
+empty-content->retry burn. Non-thinking cap stays 300.
