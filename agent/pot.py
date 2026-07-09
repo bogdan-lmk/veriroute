@@ -38,12 +38,23 @@ _MATH_PROMPT = (
 
 # One generation, not two: at the grader's 2-vCPU decode speed a second
 # call blows the 28s per-task budget and the whole category degrades to
-# paid escalation.
+# paid escalation. Instructions FIRST so the constant part is a cacheable
+# prefix shared by every codegen task (prefill is the CPU bottleneck).
 _CODEGEN_PROMPT = (
-    "{prompt}\n\n"
-    "Reply with a single ```python code block containing the function "
-    "followed by exactly 3 assert statements that test it with literal inputs."
+    "Solve the coding task. Reply with a single ```python code block "
+    "containing the function followed by exactly 3 assert statements that "
+    "test it with literal inputs.\n\nTask: {prompt}"
 )
+
+
+def prompt_prefixes() -> list[str]:
+    """Constant prompt prefixes to prewarm into llama-server's cache at
+    startup: real calls then pay only for generation, which is what makes
+    executed categories fit the 30s/request rule on 2 grader vCPUs."""
+    return [
+        _MATH_PROMPT.split("{prompt}")[0],
+        _CODEGEN_PROMPT.split("{prompt}")[0],
+    ]
 
 
 _COUNT_QUESTION = re.compile(r"\bhow (many|much)\b|\bremain", re.I)
@@ -65,13 +76,15 @@ def math_pot(local: LocalLLM, prompt: str, budget_s: float) -> str | None:
     """Numeric answer via generated-and-executed code, or None.
 
     One local retry on rejection — local tokens are free; only time matters.
+    The first attempt gets the lion's share of the window: with the prompt
+    prefix prewarmed, ~200 generated tokens is the whole cost.
     """
-    per_try = max(4.0, budget_s / 2)
+    budgets = (max(4.0, budget_s * 0.7), max(4.0, budget_s * 0.3))
     for attempt in (1, 2):
         try:
             raw = local.chat(
                 _MATH_PROMPT.format(prompt=prompt),
-                max_tokens=250, timeout_s=per_try,
+                max_tokens=200, timeout_s=budgets[attempt - 1],
             )
         except Exception as exc:  # noqa: BLE001
             log.warning("math PoT generation failed (try %d): %s", attempt, exc)

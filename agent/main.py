@@ -121,7 +121,9 @@ class Router:
             if not local.alive():
                 self.local_enabled = False
             return None
-        gen_budget = max(5.0, min(budget_s - 6.0, 20.0))  # leave exec time
+        # Prefixes are prewarmed at startup, so this window is generation
+        # time only; 26s keeps the whole task under the 30s/request rule.
+        gen_budget = max(5.0, min(budget_s - 3.0, 26.0))
         if category == "math":
             return pot.math_pot(local, prompt, gen_budget)
         return pot.codegen_selftested(local, prompt, gen_budget)
@@ -229,7 +231,7 @@ def run() -> int:
     # --- Local model: free answers where verifiers can defend them ---
     local: LocalLLM | None = LocalLLM()
     if local.available and local.start():
-        local.prewarm()
+        local.prewarm(prefixes=pot.prompt_prefixes())
     else:
         local = None
 

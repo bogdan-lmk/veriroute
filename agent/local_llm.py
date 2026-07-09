@@ -132,12 +132,22 @@ class LocalLLM:
 
     # -- inference -----------------------------------------------------------
 
-    def prewarm(self) -> None:
-        """Page the weights in and prime the shared-prefix prompt cache."""
+    def prewarm(self, prefixes: list[str] | None = None) -> None:
+        """Page the weights in and prime the prompt cache.
+
+        Startup has its own 60s budget, so prefilling the constant PoT/codegen
+        prefixes here is free — real calls then pay only for generation.
+        """
         try:
             self.chat("Reply with OK.", max_tokens=4, timeout_s=30.0)
         except Exception as exc:  # noqa: BLE001 - prewarm is best-effort
             log.warning("prewarm failed: %s", exc)
+            return
+        for prefix in prefixes or []:
+            try:
+                self.chat(prefix, max_tokens=1, timeout_s=45.0)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("prefix prewarm failed: %s", exc)
 
     def token_estimate(self, text: str) -> int:
         """Cheap upper-bound estimate (~3.5 chars/token for English)."""
