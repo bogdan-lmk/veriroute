@@ -83,30 +83,33 @@ def prompt_prefixes() -> list[str]:
     return [PAIR1.split("{desc}")[0], PAIR2.split("{desc}")[0]]
 
 
-def style_captions(local: LocalLLM, desc: str, styles: list[str],
-                   budget_s: float) -> dict[str, str]:
-    """All requested styles via the two-pair calls, with retries + fallbacks."""
-    out: dict[str, str] = {}
-    per_call = max(12.0, budget_s / 2)
-    for template, keys in ((PAIR1, ("formal", "sarcastic")),
-                           (PAIR2, ("humorous_tech", "humorous_non_tech"))):
-        wanted = tuple(k for k in keys if k in styles)
-        if not wanted:
+PAIRS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "pair1": (PAIR1, ("formal", "sarcastic")),
+    "pair2": (PAIR2, ("humorous_tech", "humorous_non_tech")),
+}
+
+
+def style_pair(local: LocalLLM, desc: str, pair: str, styles: list[str],
+               budget_s: float) -> dict[str, str]:
+    """One pair for one clip. Callers batch all clips per pair so the
+    llama-server prompt cache stays hot (one cache slot = one prefix)."""
+    template, keys = PAIRS[pair]
+    wanted = tuple(k for k in keys if k in styles)
+    if not wanted:
+        return {}
+    parsed = None
+    for attempt, temp in enumerate((0.7, 0.4)):
+        try:
+            raw = local.chat(template.replace("{desc}", desc),
+                             max_tokens=220, timeout_s=budget_s,
+                             temperature=temp)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("stylist %s failed (try %d): %s", pair, attempt + 1, exc)
             continue
-        parsed = None
-        for attempt, temp in enumerate((0.7, 0.4)):
-            try:
-                raw = local.chat(template.replace("{desc}", desc),
-                                 max_tokens=220, timeout_s=per_call,
-                                 temperature=temp)
-            except Exception as exc:  # noqa: BLE001
-                log.warning("stylist call failed (try %d): %s", attempt + 1, exc)
-                continue
-            parsed = _extract(raw, keys)
-            if parsed:
-                break
-            log.warning("stylist parse failed (try %d, keys=%s): %r",
-                        attempt + 1, keys, raw[:160])
-        for k in wanted:
-            out[k] = parsed[k].strip() if parsed else fallback_caption(desc, k)
-    return out
+        parsed = _extract(raw, keys)
+        if parsed:
+            break
+        log.warning("stylist %s parse failed (try %d): %r",
+                    pair, attempt + 1, raw[:160])
+    return {k: parsed[k].strip() if parsed else fallback_caption(desc, k)
+            for k in wanted}

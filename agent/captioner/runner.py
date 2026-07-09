@@ -19,7 +19,7 @@ from ..deadline import Deadline
 from ..local_llm import LocalLLM
 from . import frames as frames_mod
 from .eye import Eye
-from .stylist import STYLES, fallback_caption, style_captions
+from .stylist import STYLES, fallback_caption
 
 log = logging.getLogger("agent.captioner")
 
@@ -115,24 +115,33 @@ def run(tasks: list[dict]) -> int:
         port=8092, ctx=2048, system_prompt="",
     )
     gemma_ok = gemma.available and gemma.start()
-    if gemma_ok:
-        from .stylist import prompt_prefixes
-        gemma.prewarm(prefixes=prompt_prefixes())
-    for task in tasks:
-        tid = task["task_id"]
-        desc = descriptions.get(tid)
-        styles = task.get("styles") or list(STYLES)
-        if not desc:
-            continue  # stubs already in place
-        if deadline.flush_due():
-            answers[tid] = {s: fallback_caption(desc, s) for s in styles}
+    # Two sub-passes (all clips x pair1, then all clips x pair2): consecutive
+    # requests share one constant prefix, so llama-server's single cache slot
+    # prefills the few-shot block once per pass instead of per call.
+    from .stylist import PAIRS, style_pair
+    for pair in PAIRS if gemma_ok else ():
+        prefix = PAIRS[pair][0].split("{desc}")[0]
+        gemma.prewarm(prefixes=[prefix])
+        for task in tasks:
+            tid = task["task_id"]
+            desc = descriptions.get(tid)
+            styles = task.get("styles") or list(STYLES)
+            if not desc:
+                continue  # stubs already in place
+            if deadline.flush_due():
+                caps = {k: fallback_caption(desc, k)
+                        for k in PAIRS[pair][1] if k in styles}
+            else:
+                caps = style_pair(gemma, desc, pair, styles,
+                                  min(30.0, deadline.task_budget()))
+            answers[tid].update(caps)
             _write(answers)
-            continue
-        if gemma_ok:
-            answers[tid] = style_captions(gemma, desc, styles,
-                                          deadline.task_budget())
-        else:
-            answers[tid] = {s: fallback_caption(desc, s) for s in styles}
+    if not gemma_ok:
+        for task in tasks:
+            tid, desc = task["task_id"], descriptions.get(task["task_id"])
+            if desc:
+                styles = task.get("styles") or list(STYLES)
+                answers[tid] = {s: fallback_caption(desc, s) for s in styles}
         _write(answers)
     gemma.stop()
     log.info("captioner done: %d/%d described, %.1fs elapsed",
