@@ -57,3 +57,14 @@ One logical change vs sub1 — escalation output policy, measured live on minima
 
 TERSE_SUFFIX cut simple-task completions ~40-60%; thinking cap 1000 avoids the
 empty-content->retry burn. Non-thinking cap stays 300.
+
+## Submission live (2026-07-09)
+
+Team **Momentum** (Bogdan + Nick), submission page:
+https://lablab.ai/ai-hackathons/amd-developer-hackathon-act-ii/momentum/verification-driven-token-efficient-routing-agent
+Image submitted: ghcr.io/bogdan-lmk/veriroute:sub2. Awaiting automated scoring.
+
+Competitive intel from neighboring submissions: verification-cascade is now the common meta
+("prove or escalate", "local first + verify", claims of 2/3 tasks at zero tokens) — BUT the
+loudest competitor (TokenRouter prove-or-escalate) sits at ACCURACY_GATE_FAILED 0.0% on the
+leaderboard. Strategy is table stakes; execution through the gate is the differentiator.
