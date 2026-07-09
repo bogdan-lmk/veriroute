@@ -99,6 +99,8 @@ def style_captions(local: LocalLLM, desc: str, styles: list[str],
             parsed = _extract(raw, keys)
             if parsed:
                 break
+            log.warning("stylist parse failed (try %d, keys=%s): %r",
+                        attempt + 1, keys, raw[:160])
         for k in wanted:
             out[k] = parsed[k].strip() if parsed else fallback_caption(desc, k)
     return out
