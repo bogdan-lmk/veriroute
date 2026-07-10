@@ -40,6 +40,10 @@ COPY models/qwen2.5-1.5b-instruct-q4_k_m.gguf /app/model.gguf
 COPY models/smolvlm2-500m-q8.gguf /app/smolvlm.gguf
 COPY models/smolvlm2-mmproj.gguf /app/smolvlm-mmproj.gguf
 COPY models/gemma-3-4b-it-Q4_K_M.gguf /app/gemma.gguf
+# Track 1 router uses Gemma-3-4B (measured accurate on text); qwen stays as a
+# fast fallback. The grader sets no env, so bake the hybrid defaults here.
+ENV AGENT_LLAMA_MODEL=/app/gemma.gguf
+ENV AGENT_LOCAL_TIMEOUT_S=32
 # Track 2 escalation goes through our relay: a URL is baked, the API key is
 # NOT — it lives on our box and the relay dies after the event. The Track 1
 # path never reads this; it uses harness-injected env only.
