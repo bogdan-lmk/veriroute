@@ -122,3 +122,15 @@ PREDICTIONS on record:
 - T1: gate pass p~0.65-0.75; tokens ~1.5-2.5k if gemma-4 in ALLOWED_MODELS, 3-5.5k if thinking-only.
 - T2: mid-field on the auto leaderboard (SmolVLM eye vs cloud-VLM competitors); style scores decent.
 - First risk to watch: any infra status (PULL/RUNTIME/TIMEOUT) — fix on grader-twin within the hour.
+
+## FIRST REAL SCORE + fix (2026-07-10 morning)
+
+Scored at last: ACCURACY_GATE_FAILED 47.4% (9/19) — matches the "token budget exhausted ->
+stubbed tail" failure shape (4k budget < ~5.7k needed with thinking escalations).
+Kimi-only repro on grader-twin: 0 empty answers -> thinking-truncation theory dead;
+budget-stub theory prime. Field update: 17 qualifiers, leader 3,864 tok, accuracies up to
+100% (16/19 ceiling was small-sample illusion).
+FIX shipped in duo digest 60226fff: AGENT_TOKEN_BUDGET 4k->15k (gate over rank) +
+never-empty answers (last-resort unverified local guess instead of stub).
+Prediction v2: gate pass p~0.55 (if cause was budget); if score stays ~47% -> local answer
+quality is the real culprit -> next change: audit/disable weak local categories.
