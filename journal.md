@@ -134,3 +134,23 @@ FIX shipped in duo digest 60226fff: AGENT_TOKEN_BUDGET 4k->15k (gate over rank) 
 never-empty answers (last-resort unverified local guess instead of stub).
 Prediction v2: gate pass p~0.55 (if cause was budget); if score stays ~47% -> local answer
 quality is the real culprit -> next change: audit/disable weak local categories.
+
+## MEASURED GATE PASS via own eval (2026-07-10 afternoon)
+
+Built a 32-task hidden-like eval (8 categories x 4, gpt-oss-120b authored, glm-5p2 judge)
+and ran the REAL container on grader-twin. Iterations:
+| round | policy change | score | tokens/32 |
+|-------|---------------|-------|-----------|
+| 1 | budget 15k, local NER/summ/sent + PoT | 17/32 53% FAIL | 15945 |
+| 2 | escalate NER+summ | 20/32 62% | 25924 |
+| 3 | escalate sentiment+math, budget 25k | 28/32 87% PASS | 28352 |
+| 4 | 2x code caps + fixed logic eval | 31/32 97% | 17166 |
+| 5-6 | 3x code caps + def-retry + last-resort code draft | 31/32 97% | 19162 |
+Root cause of the 47% board score CONFIRMED: local text categories fail the judge
+(NER 0/4, summ 2/4, sentiment 3/4, math-PoT 3/4). Only execution-verified code stays local.
+Escalated categories score 4/4. Remaining fail: 1 adversarial codegen (palindrome_pairs) where
+thinking models leak a truncated reasoning trace — noise on the 19-task real set.
+duo digest a4dc8f00. STRATEGY NOTE: gate now passes comfortably BUT we escalate ~30/32 ->
+~11k tokens on the 19-task set vs leader 3,864. Rank among passers will be low; the real
+grader's ALLOWED_MODELS (if it has non-thinking gemma-4) cuts completion tokens ~3x. Get the
+real board score first, THEN decide token-vs-gate tradeoff. Gate pass >> token rank.
