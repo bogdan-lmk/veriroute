@@ -50,15 +50,18 @@ TERSE_SUFFIX = (
 )
 
 
-def _max_completion_tokens(model: str) -> int:
+def _max_completion_tokens(model: str, category: str = "") -> int:
     """Thinking models bill hidden reasoning as completion tokens — a tight
     cap silently truncates their visible answer (observed live: 3/8 answers
-    cut at 300). Give them headroom; keep non-thinking models tight."""
+    cut at 300, and escalated codegen shipped a cut reasoning draft at 1000).
+    Code tasks get double headroom; non-thinking models stay tight."""
     if is_thinking_likely(model):
-        # Measured live on minimax-m3 (8 practice tasks): cap 600 starved
-        # codegen (empty content -> paid retry, 4411 total); cap 1000 kept
-        # every answer intact at 3573 total. Reasoning models need headroom.
-        return int(os.environ.get("AGENT_MAX_TOKENS_THINKING", "1000"))
+        base = int(os.environ.get("AGENT_MAX_TOKENS_THINKING", "1000"))
+        if category in ("code_gen", "code_debug"):
+            return base * 2
+        return base
+    if category in ("code_gen", "code_debug"):
+        return int(os.environ.get("AGENT_MAX_COMPLETION_TOKENS", "300")) * 2
     return int(os.environ.get("AGENT_MAX_COMPLETION_TOKENS", "300"))
 
 
@@ -110,7 +113,7 @@ class Router:
                 return local_answer
             self.stats["local_rejected"] += 1
         self.stats["escalated"] += 1
-        answer = self._escalate(prompt, budget_s)
+        answer = self._escalate(prompt, budget_s, category)
         if answer:
             return answer
         # Never ship an empty answer: an unverified local guess scores a
@@ -170,14 +173,14 @@ class Router:
         log.info("local answer rejected by verifier (%s)", category)
         return None
 
-    def _escalate(self, prompt: str, budget_s: float) -> str:
+    def _escalate(self, prompt: str, budget_s: float, category: str = "") -> str:
         for model in self.models:
             if model in self._demoted:
                 continue
             if self.client.meter.exhausted():
                 log.warning("token budget exhausted, stubbing remaining work")
                 return STUB_ANSWER
-            max_tokens = _max_completion_tokens(model)
+            max_tokens = _max_completion_tokens(model, category)
             effort = "low" if supports_reasoning_effort(model) else None
             try:
                 result = self.client.chat(

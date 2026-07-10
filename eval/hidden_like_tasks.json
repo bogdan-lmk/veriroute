@@ -97,19 +97,19 @@
  },
  {
   "task_id": "logic-1",
-  "prompt": "Three friends—Alex, Brooke, and Charlie—each own a different pet: a cat, a dog, and a rabbit. From the clues below, determine which person owns which pet.\n1. Alex does not own the rabbit.\n2. The person who owns the dog is not Brooke.\nWho owns the cat, the dog, and the rabbit?"
+  "prompt": "Three friends—Alice, Bob, and Charlie—each have a different favorite fruit: apple, banana, or cherry. Determine which fruit each person likes based on the following clues:\n1. Alice does not like banana.\n2. Bob's favorite fruit is not apple.\n3. The person who likes cherry is not Charlie.\n4. Bob's favorite fruit comes alphabetically after Alice's favorite fruit."
  },
  {
   "task_id": "logic-2",
-  "prompt": "In a small office, three coworkers—Dana, Eli, and Fiona—use three different computers: a desktop, a laptop, and a tablet. Use the following hints to match each coworker with their device.\n- The laptop is used by neither Dana nor Eli.\n- Fiona does not use the desktop.\n- Dana's device is not the tablet.\nWhich device does each coworker use?"
+  "prompt": "Three drivers—Mike, Nina, and Omar—each drive a car of a different color: red, blue, or green. Determine which driver drives which colored car using these clues:\n1. The red car is driven by Nina.\n2. Mike does not drive the green car.\n3. The blue car is not driven by Omar."
  },
  {
   "task_id": "logic-3",
-  "prompt": "Three roommates—Gina, Hugo, and Ian—each have a different favorite genre of music: jazz, rock, and classical. Determine each person's favorite genre using the clues.\n1. Hugo's favorite is not jazz.\n2. The person who loves classical music is not Gina.\n3. Gina does not like rock.\nWhat genre does each roommate prefer?"
+  "prompt": "Three books are placed on shelves 1, 2, and 3. Each book is of a different genre: mystery, sci‑fi, or history. Identify the genre on each shelf with these clues:\n1. The mystery book is not on shelf 1.\n2. The sci‑fi book is on a higher‑numbered shelf than the history book.\n3. The book on shelf 2 is not sci‑fi."
  },
  {
   "task_id": "logic-4",
-  "prompt": "At a school fair, three students—Jenna, Kyle, and Maya—each win a different prize: a bike, a skateboard, and a kite. Figure out who won which prize from the statements below.\n- Jenna did not win the skateboard.\n- The kite was won by the student who is not Kyle.\n- Maya's prize is not the bike.\nIdentify the prize each student received."
+  "prompt": "Three people—Liam, Maya, and Noah—each own a different type of pet: dog, cat, or fish. Find out who owns which pet using the clues below:\n1. Maya does not own the cat.\n2. The dog is owned by the person whose name starts with N.\n3. Liam's pet is not a fish."
  },
  {
   "task_id": "code_gen-1",
