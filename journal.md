@@ -171,3 +171,22 @@ tokens. Winning number is now <2k tokens. Our duo ~11k/19 projected: gate-pass b
 half. Post-verdict lever: re-enable the cheapest local categories up to the 3-miss budget
 (sentiment 3/4, math PoT 3/4 measured) + low-cap first-try escalation; one change per sub.
 T2: top scores 0.91/0.90/0.89/0.88/0.87/0.86 — dense; mid-field realistic for SmolVLM eye.
+
+## WINNING LEVER: reasoning_effort=none (2026-07-10 ~16:40)
+
+Leaderboard scrape (T1, 50 scored): top-4 sit EXACTLY on the gate at 1,992-2,664 tokens;
+one rival's blurb gave it away — "all 5 allowed models bill hidden reasoning tokens by
+default, and the one universal switch that disables it. 100% eval accuracy, ~164 tok/task".
+MEASURED live: reasoning_effort=none drops minimax-m3 29->23 and kimi-k2p7-code 78->9
+completion tokens, reasoning_content gone. Our code treated both as uncontrollable thinking
+(cap 1000). Fix: _REASONING_OFF={minimax-m,kimi-k2}, effort=none, tight caps, cheap rank.
+Eval (32 tasks, minimax+kimi only = worst case, no gemma):
+| version | tokens/32 | completion | accuracy | note |
+|---------|-----------|------------|----------|------|
+| reasoning ON (a4dc8f00) | 19,162 | 12,965 | 31/32 97% | prior duo |
+| reasoning=none (r7) | 7,946 | 2,241 | 31/32 97% | -58% tokens; logic-1 dropped |
+| + logic=low (r8, 503642da) | 8,328 | 2,603 | 31/32 97% | logic 4/4; only fail = ner-2 BAD EXPECTED (Eiffel=landmark not org) |
+=> effectively 32/32. Projected on 19-task hidden set: ~4.9k prompt+completion, ~1.5k
+completion-only. On the REAL grader gemma-4-31b (non-thinking) leads the rank and is even
+cheaper — reasoning-off is the safety net + the gemma-down path. duo digest 503642da PUSHED.
+Submission points at :duo tag (re-saved 16:06) => auto re-scores on next grader run.
