@@ -251,3 +251,17 @@ step: localize code_debug (gemma got practice-06 right) + math (PoT), escalate O
 factual+logic -> ~1,700 tokens => top-3. Validate on practice tasks before shipping.
 SHIP ORDER unchanged: escalate-all confirms the gate (safety net) FIRST, then hybrid.
 Small-sample caveat: 8 practice tasks != 19 hidden; the real grader is the final judge.
+
+## COMPLIANCE: relay removed — provably Fireworks-only (2026-07-10 ~18:30)
+
+Organizer clarification: containers routing OUTSIDE Fireworks will be DISQUALIFIED (manual
+audit of flagged/top submissions). Our escalation relay (droplet :8899) routed there.
+VERIFIED current :duo was already runtime-safe: ESCALATION_RELAY_URL baked EMPTY -> relay
+never triggers; Track 1 uses grader-injected FIREWORKS_BASE_URL (direct). But the relay CODE
++ "key lives on our box" comment in the public repo could flag a manual audit. Removed the
+relay entirely from captioner + Dockerfile; no droplet/relay references remain in code.
+New clean :duo digest e729dfac pushed (Track 1 functionally identical — it never used relay;
+Track 2 now local-only if no key injected). Container is provably Fireworks-only.
+STRATEGIC (same clarification): final scoring uses NEW randomized prompts -> overfit/hardcoded
+0-token leaders will DROP; our category-based routing (localize sentiment/summ/ner, escalate
+factual/logic — found on the 8 REAL practice tasks) GENERALIZES and carries to the final.
