@@ -25,15 +25,19 @@ _PATTERNS: dict[str, list[re.Pattern]] = {
     "sentiment": [
         re.compile(r"\bsentiment\b", re.I),
         re.compile(r"\bclassify\b.{0,40}\b(review|tone|opinion)\b", re.I),
+        re.compile(r"\b(reviewer|customer|author)\b.{0,30}\b(happy|upset|angry|satisfied|pleased)\b", re.I),
+        re.compile(r"\b(positive|negative|mixed|neutral)\b.{0,20}\b(or|,)\b.{0,20}\b(positive|negative|mixed|neutral)\b", re.I),
     ],
     "ner": [
         re.compile(r"\bnamed entit(y|ies)\b", re.I),
         re.compile(r"\bextract\b.{0,60}\bentit(y|ies)\b", re.I),
+        re.compile(r"\b(pull out|list|identify|find)\b.{0,50}\b(people|places|locations?|organi[sz]ations?|entit)", re.I),
     ],
     "summarization": [
         re.compile(r"\bsummari[sz]e\b", re.I),
         re.compile(r"\bsummary\b", re.I),
         re.compile(r"\bcondense\b|\btl;?dr\b", re.I),
+        re.compile(r"\bgist\b|\bin (one|a single|1) (line|sentence)\b", re.I),
     ],
     # Math needs BOTH a digit somewhere and an arithmetic cue (see classify);
     # these patterns are only the cue half.
@@ -62,6 +66,19 @@ _PATTERNS: dict[str, list[re.Pattern]] = {
 _CODE_SIGNAL = re.compile(r"```|\bdef \w+\(|\bfunction\s+\w+\(|\breturn\b")
 _WORD = re.compile(r"[A-Za-z]")
 
+# Text-analysis categories run on the LOCAL model, so they must analyze a body
+# of text the prompt SUPPLIES — not merely mention a keyword. "Classify the
+# sentiment of this review: <text>" is local; "What is the sentiment analysis
+# algorithm?" is factual recall and must escalate. Require a colon-introduced
+# body (>=20 chars) or a quoted span (>=15 chars) before trusting these.
+_TEXT_TASKS = ("sentiment", "ner", "summarization")
+_PROVIDED_TEXT = re.compile(r":\s*\S.{20,}", re.S)
+_QUOTED = re.compile(r"[\"'‘“].{15,}?[\"'’”]", re.S)
+
+
+def _has_provided_text(prompt: str) -> bool:
+    return bool(_PROVIDED_TEXT.search(prompt) or _QUOTED.search(prompt))
+
 
 def _non_ascii_ratio(text: str) -> float:
     if not text:
@@ -85,6 +102,13 @@ def classify(prompt: str) -> str:
     # The math cue only counts when there are actual numbers to compute with.
     if "math" in hits and not re.search(r"\d", prompt):
         del hits["math"]
+
+    # Text-analysis categories only fire on a supplied text body; a keyword in
+    # a factual question ("the sentiment algorithm", "summarize who won...")
+    # must not route a knowledge question to the local model.
+    if not _has_provided_text(prompt):
+        for cat in _TEXT_TASKS:
+            hits.pop(cat, None)
 
     # Code snippets pull debug/gen apart: with code present, a "fix" cue wins
     # over generation cues; without code, "write a function" is generation.

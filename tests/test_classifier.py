@@ -103,3 +103,41 @@ class TestDisambiguation:
         # "fix it" without any code signal should not classify as debug.
         result = classify("My printer is broken, how do I fix it?")
         assert result in (ESCALATE, "factual")
+
+
+class TestTextTaskGrounding:
+    """Local text categories must analyze a SUPPLIED text, not fire on a
+    keyword inside a factual question (would route knowledge to a weak model)."""
+
+    def test_factual_with_sentiment_keyword_escalates(self):
+        assert classify(
+            "What is the sentiment analysis algorithm used by Twitter?"
+        ) not in ("sentiment", "ner", "summarization")
+
+    def test_factual_dressed_as_summarize_escalates(self):
+        assert classify(
+            "Summarize who won the 2022 World Cup and the final score."
+        ) not in ("sentiment", "ner", "summarization")
+
+    def test_factual_mentioning_entities_escalates(self):
+        assert classify(
+            "Which company pioneered named entity recognition research?"
+        ) not in ("sentiment", "ner", "summarization")
+
+    def test_genuine_sentiment_with_quoted_review_is_local(self):
+        assert classify(
+            "Is this reviewer happy or upset? 'Fast shipping, but the item "
+            "broke on day one.'"
+        ) == "sentiment"
+
+    def test_genuine_ner_varied_phrasing_is_local(self):
+        assert classify(
+            "Pull out the people, places, and companies mentioned: Elon met "
+            "Sunak in London."
+        ) == "ner"
+
+    def test_genuine_summary_gist_phrasing_is_local(self):
+        assert classify(
+            "Give me the gist in one line: The council passed a budget after "
+            "a long debate over school funding, splitting the vote 5 to 4."
+        ) == "summarization"
