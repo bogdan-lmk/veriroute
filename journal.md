@@ -213,3 +213,22 @@ determinism/prompting. With OUR hardware, a big local model is a dead end. escal
 the pragmatic gate choice; realistic climb = trim escalation prompt tokens (~5k -> ~3-4k),
 not 0-token local. Reclaiming SHORT-output categories (sentiment=1 word) on the fast 1.5B with
 better prompting is the only 0-token lever left, and it's accuracy-risky (1.5B was 3/4).
+
+## Organizer clarifications + token-trim banked (2026-07-10 ~17:30)
+
+Official Discord clarifications:
+- Gate is 80% (still effectively 16/19: 15/19=78.9% fails, 16/19=84.2% passes).
+- LLM JUDGE IS NON-DETERMINISTIC run-to-run => our ~18/19 margin is an ASSET: teams sitting
+  exactly on 16/19 can drop to 15/19 on a bad judge roll and fall off. escalate-all's margin
+  is insurance, not waste.
+- GEMMA IS ON-DEMAND, NOT on the grader ("you don't need Gemma to pass"). CORRECTS my earlier
+  "grader routes to gemma-4-31b ~3.4k" claim: grader hits always-on minimax/kimi. Our eval
+  (minimax+kimi) IS representative, real ~5k not 3.4k. reasoning-off is exactly why that's 5k
+  not 11k — validated as the critical lever.
+- Turnaround ~1h (5min was just the poll interval). Don't spam re-saves; check the registry
+  pull counter to see if pulled. INFRA_ERROR is on them (auto-retry). Keep image <5GB (we're 4.29GB, safe).
+TOKEN-TRIM (exp/trim-terse, e9b6e1a): trimmed TERSE_SUFFIX ~25->8 tokens. Eval 32 tasks:
+8328 -> 7505 tokens (-10%: prompt -390, completion -433 — short suffix => terser answers),
+accuracy held 31/32 96.9% (fail = factual-2 wrong year, model noise). BANKED for cycle 2 —
+NOT pushed. Ship only after escalate-all (503642da) confirms the gate on the real grader.
+Projection 19 tasks: ~4.45k tokens => rank ~12. Top-5 (<3.3k) needs FEWER escalations (risky local).
