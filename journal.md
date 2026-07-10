@@ -113,3 +113,12 @@ Input-schema dispatch: {prompt}->router, {video_url,styles}->captioner. One imag
 - Eye consistency check (frames_agree) escalates drifting descriptions to minimax via baked
   b64 key (T2 injects nothing; T1 never reads it). Local fallback keeps agent alive keyless.
 Image: ghcr.io/bogdan-lmk/veriroute:duo — submit this for BOTH tracks (Event Tracks multiselect).
+
+## SUBMITTED: duo, both tracks (2026-07-09 ~15:10 local)
+
+Image: ghcr.io/bogdan-lmk/veriroute:duo (no secrets; relay escalation). Event Tracks: T1+T2.
+Descriptions: still v1 (T1-only) — update later for the Gemma-prize jury narrative.
+PREDICTIONS on record:
+- T1: gate pass p~0.65-0.75; tokens ~1.5-2.5k if gemma-4 in ALLOWED_MODELS, 3-5.5k if thinking-only.
+- T2: mid-field on the auto leaderboard (SmolVLM eye vs cloud-VLM competitors); style scores decent.
+- First risk to watch: any infra status (PULL/RUNTIME/TIMEOUT) — fix on grader-twin within the hour.
