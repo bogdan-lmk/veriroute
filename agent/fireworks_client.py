@@ -39,15 +39,17 @@ class TransientAPIError(RuntimeError):
 class TokenMeter:
     """Global token accounting with a hard stop.
 
-    The stop (default 4000) guarantees a bad ALLOWED_MODELS day can never
-    push the submission above the current leader's 5121 tokens.
+    The stop is a runaway guard, NOT an optimization target: an exhausted
+    budget stubs remaining answers and forfeits the accuracy gate — which is
+    exactly how an earlier submission scored 9/19. Rank means nothing below
+    the gate, so the default leaves generous headroom.
     """
 
     def __init__(self, budget: int | None = None):
         self.budget = (
             budget
             if budget is not None
-            else int(os.environ.get("AGENT_TOKEN_BUDGET", "4000"))
+            else int(os.environ.get("AGENT_TOKEN_BUDGET", "15000"))
         )
         self.prompt_tokens = 0
         self.completion_tokens = 0

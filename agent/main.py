@@ -113,7 +113,26 @@ class Router:
                 return local_answer
             self.stats["local_rejected"] += 1
         self.stats["escalated"] += 1
-        return self._escalate(prompt, budget_s)
+        answer = self._escalate(prompt, budget_s)
+        if answer:
+            return answer
+        # Never ship an empty answer: an unverified local guess scores a
+        # judge roll; an empty string scores zero with certainty.
+        return self._last_resort_local(prompt)
+
+    def _last_resort_local(self, prompt: str) -> str:
+        if self.local is None or not self.local_enabled:
+            return STUB_ANSWER
+        try:
+            if not self.local.ensure_alive():
+                return STUB_ANSWER
+            guess = self.local.chat(prompt, max_tokens=180, timeout_s=20.0)
+            if guess.strip():
+                log.warning("escalation empty -> unverified local guess shipped")
+                return guess.strip()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("last-resort local failed: %s", exc)
+        return STUB_ANSWER
 
     def _try_executed(self, category: str, prompt: str, budget_s: float) -> str | None:
         local = self.local
