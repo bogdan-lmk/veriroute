@@ -35,7 +35,7 @@ from .model_ranking import (
     is_thinking_likely,
     parse_allowed_models,
     rank_models,
-    supports_reasoning_effort,
+    reasoning_effort_for,
 )
 
 log = logging.getLogger("agent.main")
@@ -187,7 +187,7 @@ class Router:
                 log.warning("token budget exhausted, stubbing remaining work")
                 return STUB_ANSWER
             max_tokens = _max_completion_tokens(model, category)
-            effort = "low" if supports_reasoning_effort(model) else None
+            effort = reasoning_effort_for(model)
             try:
                 result = self.client.chat(
                     model, prompt + TERSE_SUFFIX, max_tokens,

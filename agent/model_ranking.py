@@ -16,6 +16,13 @@ import re
 # Name-only heuristics; the real list arrives at runtime and may contain anything.
 _THINKING_MARKERS = ("thinking", "reasoner", "-r1", "reason")
 _EFFORT_CONTROLLABLE = ("gpt-oss",)  # reasoning_effort=low tames these
+# Thinking families that accept reasoning_effort=none, which fully suppresses
+# the hidden reasoning stream. Measured live 2026-07-10 on the real API:
+# minimax-m3 29->23 and kimi-k2p7-code 78->9 completion tokens, reasoning_content
+# gone. These are the only two thinking families in the Track 1 ALLOWED_MODELS,
+# so turning reasoning off is what closes the ~9x token gap to the leaders.
+# Kept to measured families only; unverified ones stay in _KNOWN_THINKING_FAMILIES.
+_REASONING_OFF = ("minimax-m", "kimi-k2")
 _KNOWN_THINKING_FAMILIES = ("deepseek-v4", "kimi-k2", "glm-5", "minimax-m")
 _CHEAP_VARIANT_MARKERS = ("flash", "mini", "nano", "lite", "tiny", "air", "distill")
 
@@ -46,14 +53,30 @@ def size_billions(model_id: str) -> float | None:
     return float(m.group(1).replace("p", ".")) if m else None
 
 
+def reasoning_effort_for(model_id: str) -> str | None:
+    """The reasoning_effort value to send this model, or None to omit it.
+
+    gpt-oss is tamed with 'low'; the known thinking families accept 'none',
+    which suppresses the reasoning stream entirely (the single biggest token
+    lever — their reasoning is billed as completion tokens by the proxy)."""
+    name = base_name(model_id)
+    if any(k in name for k in _EFFORT_CONTROLLABLE):
+        return "low"
+    if any(k in name for k in _REASONING_OFF):
+        return "none"
+    return None
+
+
 def supports_reasoning_effort(model_id: str) -> bool:
-    return any(k in base_name(model_id) for k in _EFFORT_CONTROLLABLE)
+    return reasoning_effort_for(model_id) is not None
 
 
 def is_thinking_likely(model_id: str) -> bool:
     name = base_name(model_id)
     if supports_reasoning_effort(model_id):
-        return False  # controllable via reasoning_effort=low
+        # Reasoning is controllable (low/none): it bills like a non-thinking
+        # model, so it earns tight caps and a good escalation rank.
+        return False
     return any(k in name for k in _THINKING_MARKERS) or any(
         f in name for f in _KNOWN_THINKING_FAMILIES
     )

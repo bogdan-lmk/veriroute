@@ -3,6 +3,7 @@ from agent.model_ranking import (
     is_thinking_likely,
     parse_allowed_models,
     rank_models,
+    reasoning_effort_for,
     size_billions,
     supports_reasoning_effort,
 )
@@ -43,8 +44,9 @@ class TestSizeParsing:
 
 class TestThinkingDetection:
     def test_known_thinking_families(self):
+        # Thinking families we have NOT verified a reasoning switch for stay
+        # classified as thinking (tight-cap + demoted rank).
         assert is_thinking_likely(f"{PREFIX}deepseek-v4-flash")
-        assert is_thinking_likely(f"{PREFIX}kimi-k2p6")
         assert is_thinking_likely(f"{PREFIX}glm-5p1")
         assert is_thinking_likely(f"{PREFIX}qwen3-30b-thinking")
 
@@ -54,7 +56,17 @@ class TestThinkingDetection:
 
     def test_gpt_oss_is_effort_controllable(self):
         assert supports_reasoning_effort(f"{PREFIX}gpt-oss-20b")
+        assert reasoning_effort_for(f"{PREFIX}gpt-oss-20b") == "low"
         assert not is_thinking_likely(f"{PREFIX}gpt-oss-20b")
+
+    def test_reasoning_off_families_bill_like_non_thinking(self):
+        # minimax-m3 and kimi-k2 accept reasoning_effort=none (measured live):
+        # with reasoning suppressed they are no longer treated as thinking, so
+        # they earn tight token caps and a cheap escalation rank.
+        for m in (f"{PREFIX}minimax-m3", f"{PREFIX}kimi-k2p7-code"):
+            assert reasoning_effort_for(m) == "none"
+            assert supports_reasoning_effort(m)
+            assert not is_thinking_likely(m)
 
 
 class TestRanking:
@@ -77,12 +89,14 @@ class TestRanking:
         ])
         assert ranked[0].endswith("gpt-oss-120b")
 
-    def test_cheap_thinking_variant_before_premium(self):
+    def test_reasoning_off_beats_uncontrollable_thinking(self):
+        # kimi-k2 with reasoning suppressed is cheaper than a thinking model
+        # we cannot switch off, so it escalates first.
         ranked = rank_models([
-            f"{PREFIX}kimi-k2p6",
             f"{PREFIX}deepseek-v4-flash",
+            f"{PREFIX}kimi-k2p6",
         ])
-        assert ranked[0].endswith("deepseek-v4-flash")
+        assert ranked[0].endswith("kimi-k2p6")
 
     def test_realistic_full_ordering(self):
         ranked = rank_models([
@@ -93,11 +107,13 @@ class TestRanking:
             f"{PREFIX}llama-v3p2-3b-instruct",
         ])
         names = [m.rsplit("/", 1)[-1] for m in ranked]
-        assert names[0] == "gpt-oss-120b"          # non-thinking, largest
-        assert names[1] == "gpt-oss-20b"           # non-thinking
-        assert names[2] == "llama-v3p2-3b-instruct"  # non-thinking, small
-        assert names[3] == "deepseek-v4-flash"     # thinking but cheap variant
-        assert names[4] == "kimi-k2p6"             # thinking premium
+        # Cheap group (non-thinking + reasoning-off) sorts by size desc; the
+        # one uncontrollable thinking model sinks to last.
+        assert names[0] == "gpt-oss-120b"          # largest cheap
+        assert names[1] == "kimi-k2p6"             # reasoning-off, unknown size (30)
+        assert names[2] == "gpt-oss-20b"           # non-thinking, 20b
+        assert names[3] == "llama-v3p2-3b-instruct"  # non-thinking, small
+        assert names[4] == "deepseek-v4-flash"     # uncontrollable thinking, last
 
     def test_unknown_names_do_not_crash(self):
         junk = ["x", "a/b/c", "MODEL", "123", "-,-"]
@@ -105,8 +121,11 @@ class TestRanking:
 
     def test_actual_track1_list_ordering(self):
         """The (probable) real Track 1 set, cross-confirmed in two participant
-        repos: Gemma-4 non-thinking models must outrank the thinking pair,
-        and minimax must outrank kimi (matches real output-token pricing)."""
+        repos. The largest Gemma leads (best accuracy, Gemma prize, confirmed
+        working behind the proxy); minimax/kimi are reasoning-off and land in
+        the same cheap group, ranked by their (unknown => 30b) size proxy so
+        they sit between the 31b and 26b Gemmas. Every model here is cheap now
+        — the tail order only matters when the leader 404s."""
         real = [
             f"{PREFIX}minimax-m3",
             f"{PREFIX}kimi-k2p7-code",
@@ -115,10 +134,8 @@ class TestRanking:
             f"{PREFIX}gemma-4-31b-it-nvfp4",
         ]
         names = [m.rsplit("/", 1)[-1] for m in rank_models(real)]
-        assert names == [
-            "gemma-4-31b-it",
-            "gemma-4-31b-it-nvfp4",
-            "gemma-4-26b-a4b-it",
-            "minimax-m3",
-            "kimi-k2p7-code",
-        ]
+        assert names[0] == "gemma-4-31b-it"          # 31b leads
+        assert names[1] == "gemma-4-31b-it-nvfp4"    # 31b
+        assert names[2] == "minimax-m3"              # reasoning-off, ~30
+        assert names[3] == "kimi-k2p7-code"          # reasoning-off, ~30
+        assert names[4] == "gemma-4-26b-a4b-it"      # smallest Gemma, 26b
