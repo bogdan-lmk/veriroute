@@ -44,10 +44,7 @@ STUB_ANSWER = ""
 
 # Multi-part questions die to verbosity, not to model weakness: the model
 # spends its budget on preamble and never reaches the second sub-question.
-TERSE_SUFFIX = (
-    "\n\nAnswer directly and completely. Address every part of the question. "
-    "No preamble, no restating the question."
-)
+TERSE_SUFFIX = "\n\nAnswer every part directly; no preamble."
 
 
 def _max_completion_tokens(model: str, category: str = "") -> int:
