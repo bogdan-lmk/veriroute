@@ -291,3 +291,21 @@ docker system prune, rebuilt clean. USER ACTION: re-save submission to queue dig
 FOLLOW-UP for the Gemma prize + manual review: the lablab Long Description still says
 "local Qwen2.5-1.5B answers sentiment/NER/summarization" — now it's Gemma-3-4B; update the
 narrative to match (strengthens Best Use of Gemma + audit clarity).
+
+## GENERALIZATION HARDENING: text-task grounding (2026-07-10 ~19:35)
+
+Measured a real final-round risk by probing the classifier on varied phrasings:
+(1) factual questions containing a trigger word ("sentiment analysis algorithm", "Summarize
+who won the World Cup") were mis-routed to the LOCAL model -> wrong answers on unseen prompts;
+(2) genuinely local tasks phrased differently ("pull out the people...", "give me the gist:")
+were NOT recognized -> escalated -> token advantage evaporates on new phrasings.
+FIX: text categories (sentiment/ner/summarization) now require a SUPPLIED text body (colon-
+introduced >=20 chars, or a quoted span >=15 chars) before firing, plus broader recognition
+cues (gist, "pull out people/places", "reviewer happy/upset"). Result (validated):
+- 8 real practice tasks: unchanged, all classify correctly.
+- 3 factual-with-trigger probes: now ESCALATE (accuracy-safe on the final).
+- 3 varied genuine local probes: now route LOCAL (token savings recovered on new phrasings).
+- 108 tests green; exact shipped :duo re-validated 8/8, 1683 tokens.
+Ships in :duo digest 41eeaa03. This is the win lever for the FINAL round (new randomized
+prompts): accuracy generalizes (any-phrasing factual/logic escalate) AND tokens generalize
+(any-phrasing genuine local tasks stay local). USER: re-save to queue 41eeaa03.
