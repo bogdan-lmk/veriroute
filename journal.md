@@ -201,3 +201,15 @@ calls. That's the ceiling (can't beat 0). Gate-passers cluster 84.2% / ~2.0-2.7k
 (local + 2-3 escalations). ~5k tokens => rank ~13-17. So our escalate-all, once it clears the
 gate, lands mid-table; climbing needs FEWER escalations (0-token local answers), which is the
 exact tradeoff our weak local text models lose. Decide token-vs-gate ONLY after a real PASS.
+
+## MEASURED DEAD END: bigger local model won't reach 0 tokens (2026-07-10 ~17:15)
+
+Hypothesis: swap T1 text categories from Qwen-1.5B to the bundled Gemma-3-4B (already in the
+image for T2) to answer text locally at 0 tokens and leave mid-table. MEASURED on grader-class
+2 vCPU / 4GB: a SINGLE 40-token Gemma-4B answer took 4-7+ min (2.4GB model load + ~3 tok/s CPU
+decode). Even amortizing load across llama-server, 4B decode is far too slow for 19 tasks in
+the 10-min budget. => The 0-token leader is NOT using a 4B; they use a fast small model + heavy
+determinism/prompting. With OUR hardware, a big local model is a dead end. escalate-all stays
+the pragmatic gate choice; realistic climb = trim escalation prompt tokens (~5k -> ~3-4k),
+not 0-token local. Reclaiming SHORT-output categories (sentiment=1 word) on the fast 1.5B with
+better prompting is the only 0-token lever left, and it's accuracy-risky (1.5B was 3/4).
