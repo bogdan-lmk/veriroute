@@ -190,3 +190,14 @@ Eval (32 tasks, minimax+kimi only = worst case, no gemma):
 completion-only. On the REAL grader gemma-4-31b (non-thinking) leads the rank and is even
 cheaper — reasoning-off is the safety net + the gemma-down path. duo digest 503642da PUSHED.
 Submission points at :duo tag (re-saved 16:06) => auto re-scores on next grader run.
+
+## Board 13:52 — gate fix still unscored; winning bar sharpened
+
+Our card still 73.7% ACCURACY_GATE_FAILED in DNQ — grader has NOT re-run the escalate-all
+fix yet (503642da pushed ~16:40, after the 16:06 re-save). Board IS churning others, so it's
+a queue/sweep delay. Action: re-save again to requeue against the current fixed image.
+NEW #1: rtq-smart-router 0 tokens / 100% — fully-local, answers all 19 with zero Fireworks
+calls. That's the ceiling (can't beat 0). Gate-passers cluster 84.2% / ~2.0-2.7k tokens
+(local + 2-3 escalations). ~5k tokens => rank ~13-17. So our escalate-all, once it clears the
+gate, lands mid-table; climbing needs FEWER escalations (0-token local answers), which is the
+exact tradeoff our weak local text models lose. Decide token-vs-gate ONLY after a real PASS.
