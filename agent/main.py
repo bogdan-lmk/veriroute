@@ -188,6 +188,13 @@ class Router:
                 return STUB_ANSWER
             max_tokens = _max_completion_tokens(model, category)
             effort = reasoning_effort_for(model)
+            # Logic puzzles are the one category where the hidden reasoning
+            # earns its tokens: reasoning=none dropped a constraint-satisfaction
+            # task in the eval. Give controllable models a light budget there.
+            if category == "logic" and effort == "none":
+                effort = "low"
+                max_tokens = max(max_tokens, int(
+                    os.environ.get("AGENT_MAX_TOKENS_LOGIC", "800")))
             try:
                 result = self.client.chat(
                     model, prompt + TERSE_SUFFIX, max_tokens,
