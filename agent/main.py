@@ -64,15 +64,14 @@ def _max_completion_tokens(model: str) -> int:
 
 # Only categories whose answers code can defend run locally; everything
 # else pays. (category -> local generation budget)
+# Eval 2026-07-10 (32 hidden-like tasks): local NER scored 0/4 (wrong entity
+# types, dropped dates) and local summarization 2/4 (lost key facts) — both
+# escalate now; sentiment held 3/4 and stays local.
 LOCAL_CATEGORIES: dict[str, int] = {
     "sentiment": 110,
-    "ner": 220,
-    "summarization": 140,
 }
 LOCAL_VERIFIERS = {
     "sentiment": verifiers.verify_sentiment,
-    "ner": verifiers.verify_ner,
-    "summarization": verifiers.verify_summarization,
 }
 # Execution-verified categories: the sandbox run IS the verifier.
 EXECUTED_CATEGORIES = ("math", "code_gen")

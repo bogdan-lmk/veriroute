@@ -1,0 +1,130 @@
+[
+ {
+  "task_id": "factual-1",
+  "prompt": "What is the capital city of Kazakhstan, and which river flows through it?"
+ },
+ {
+  "task_id": "factual-2",
+  "prompt": "Name the inventor who patented the first practical incandescent light bulb and the year it was patented."
+ },
+ {
+  "task_id": "factual-3",
+  "prompt": "Provide the chemical symbol for the element with atomic number 26 and state its most common oxidation state in compounds."
+ },
+ {
+  "task_id": "factual-4",
+  "prompt": "In which year did the Battle of Hastings occur, and which English king was defeated there?"
+ },
+ {
+  "task_id": "math-1",
+  "prompt": "A toy store has 120 action figures in stock. They sell 25% of them on Monday and then receive a shipment of 30 new figures on Tuesday. How many action figures does the store have at the end of Tuesday?"
+ },
+ {
+  "task_id": "math-2",
+  "prompt": "A water tank can hold 500 gallons. It is initially half full. Each hour, 15 gallons are pumped out, and after 4 hours a refill adds 80 gallons. How many gallons are in the tank after the refill?"
+ },
+ {
+  "task_id": "math-3",
+  "prompt": "Jordan puts $1,200 into a savings account that earns 3% interest per year, compounded annually. After the first year, he withdraws $100 and then deposits an additional $200. How much money is in the account at the end of the second year?"
+ },
+ {
+  "task_id": "math-4",
+  "prompt": "A grocery store has 250 cans of soup. They sell 10% of the cans in the morning, then receive a delivery of 40 cans. In the afternoon they sell another 15% of the current stock. How many cans are left at closing time?"
+ },
+ {
+  "task_id": "sentiment-1",
+  "prompt": "Read the following review and classify its sentiment as positive, negative, or mixed. Provide the label and a brief justification (1‑2 sentences).\n\n\"The coffee was rich and aromatic, but the service was painfully slow, and my order was wrong the first time.\"\n"
+ },
+ {
+  "task_id": "sentiment-2",
+  "prompt": "Given this short product review, determine whether the overall sentiment is positive, negative, or mixed. State the label and a concise reason.\n\n\"I love the sleek design and the battery lasts all day, so I’m completely satisfied with this phone.\"\n"
+ },
+ {
+  "task_id": "sentiment-3",
+  "prompt": "Analyze the sentiment of the following service feedback and label it as positive, negative, or mixed. Include a brief justification.\n\n\"The staff were friendly and helpful, yet the waiting area was cramped and the Wi‑Fi kept dropping.\"\n"
+ },
+ {
+  "task_id": "sentiment-4",
+  "prompt": "Classify the sentiment of this brief review as positive, negative, or mixed, and give a short explanation.\n\n\"Terrible experience: the product stopped working after one week and customer support never responded.\"\n"
+ },
+ {
+  "task_id": "summarization-1",
+  "prompt": "Summarize the following passage in exactly one sentence: \"The city council approved a new zoning law yesterday, allowing mixed-use developments in previously residential-only districts. Proponents say this will boost local economies and reduce commute times, while opponents worry about increased traffic and loss of neighborhood character. The vote was 7-3, with two council members abstaining.\""
+ },
+ {
+  "task_id": "summarization-2",
+  "prompt": "Provide a one‑sentence summary of this text: \"Researchers at the marine institute have discovered a previously unknown species of deep‑sea jellyfish that glows red instead of the usual blue. The organism was found at a depth of 4,200 meters off the coast of Chile, and its unique bioluminescence may help scientists understand new mechanisms of light production in extreme environments.\""
+ },
+ {
+  "task_id": "summarization-3",
+  "prompt": "In exactly one sentence, summarize the passage below: \"During the Renaissance, patronage played a crucial role in the development of art. Wealthy families like the Medici commissioned works from artists such as Leonardo da Vinci and Michelangelo, providing them with financial support and social prestige. This system not only allowed artists to focus on their craft but also shaped the thematic content of their creations, often reflecting the patrons' values and aspirations.\""
+ },
+ {
+  "task_id": "summarization-4",
+  "prompt": "Summarize the following excerpt in a single sentence: \"The recent amendment to the data‑privacy regulation introduces a 'right to explanation,' obligating companies to disclose the logic behind automated decisions that affect individuals. While consumer advocates praise this move as a step toward greater transparency, tech firms argue that proprietary algorithms could be compromised, potentially stifling innovation. The enforcement timeline sets a compliance deadline two years from now, with penalties for non‑compliance reaching up to 5% of global annual revenue.\""
+ },
+ {
+  "task_id": "ner-1",
+  "prompt": "Identify every named entity in the following sentence and label its type (person, organization, location, or date): \"Ada Lovelace visited the University of Cambridge in July 1843.\""
+ },
+ {
+  "task_id": "ner-2",
+  "prompt": "Extract all entities and their categories from this single sentence: \"The Eiffel Tower, located in Paris, was inaugurated on March 31, 1889.\""
+ },
+ {
+  "task_id": "ner-3",
+  "prompt": "List the named entities present in the sentence below, specifying whether each is a person, organization, location, or date: \"When Barack Obama met with the CEOs of Google and Microsoft in New York City in 2016, the media covered it extensively.\""
+ },
+ {
+  "task_id": "ner-4",
+  "prompt": "From the following sentence, pull out all named entities and annotate each as person, org, location, or date: \"Tesla's CEO Elon Musk announced a new factory in Austin on September 12, 2023.\""
+ },
+ {
+  "task_id": "code_debug-1",
+  "prompt": "Below is a short Python function that is intended to return the sum of the first *n* natural numbers. However, it contains a bug. Identify the bug and provide the corrected code.\n\n```python\n\ndef sum_first_n(n):\n    total = 0\n    for i in range(1, n):\n        total += i\n    return total\n```\n\nFind and fix it."
+ },
+ {
+  "task_id": "code_debug-2",
+  "prompt": "The following function should determine whether a given integer *x* is even. There is a logical mistake. Locate it and rewrite the function correctly.\n\n```python\n\ndef is_even(x):\n    return x % 2 == 1\n```\n\nFind and fix it."
+ },
+ {
+  "task_id": "code_debug-3",
+  "prompt": "This function is supposed to return the element at index *k* from a list *lst*. It fails for certain inputs. Identify the error and provide a corrected version.\n\n```python\n\ndef get_kth(lst, k):\n    return lst[k+1]\n```\n\nFind and fix it."
+ },
+ {
+  "task_id": "code_debug-4",
+  "prompt": "The function below should compute the product of all numbers in a list. However, it returns an incorrect result. Spot the bug and correct the function.\n\n```python\n\ndef product(lst):\n    prod = 0\n    for num in lst:\n        prod *= num\n    return prod\n```\n\nFind and fix it."
+ },
+ {
+  "task_id": "logic-1",
+  "prompt": "Three friends—Alex, Brooke, and Charlie—each own a different pet: a cat, a dog, and a rabbit. From the clues below, determine which person owns which pet.\n1. Alex does not own the rabbit.\n2. The person who owns the dog is not Brooke.\nWho owns the cat, the dog, and the rabbit?"
+ },
+ {
+  "task_id": "logic-2",
+  "prompt": "In a small office, three coworkers—Dana, Eli, and Fiona—use three different computers: a desktop, a laptop, and a tablet. Use the following hints to match each coworker with their device.\n- The laptop is used by neither Dana nor Eli.\n- Fiona does not use the desktop.\n- Dana's device is not the tablet.\nWhich device does each coworker use?"
+ },
+ {
+  "task_id": "logic-3",
+  "prompt": "Three roommates—Gina, Hugo, and Ian—each have a different favorite genre of music: jazz, rock, and classical. Determine each person's favorite genre using the clues.\n1. Hugo's favorite is not jazz.\n2. The person who loves classical music is not Gina.\n3. Gina does not like rock.\nWhat genre does each roommate prefer?"
+ },
+ {
+  "task_id": "logic-4",
+  "prompt": "At a school fair, three students—Jenna, Kyle, and Maya—each win a different prize: a bike, a skateboard, and a kite. Figure out who won which prize from the statements below.\n- Jenna did not win the skateboard.\n- The kite was won by the student who is not Kyle.\n- Maya's prize is not the bike.\nIdentify the prize each student received."
+ },
+ {
+  "task_id": "code_gen-1",
+  "prompt": "Write a Python function `unique_sorted(nums)` that takes a list of integers and returns a new list containing the unique values from the input, sorted in ascending order. The function must correctly handle an empty list and must not modify the original list."
+ },
+ {
+  "task_id": "code_gen-2",
+  "prompt": "Implement a Python function `first_duplicate(words)` that receives a list of strings and returns the first string that appears more than once when scanning from left to right. If there are no duplicates, return `None`. The function should work even if the list is empty."
+ },
+ {
+  "task_id": "code_gen-3",
+  "prompt": "Create a Python function `merge_sorted(a, b)` that takes two lists of integers, each already sorted in non‑decreasing order, and returns a new list containing all elements from both inputs, also sorted in non‑decreasing order. The function must preserve duplicate values and must not modify the input lists."
+ },
+ {
+  "task_id": "code_gen-4",
+  "prompt": "Write a Python function `palindrome_pairs(strings)` that receives a list of strings and returns a list of all ordered pairs `(i, j)` such that concatenating `strings[i] + strings[j]` forms a palindrome. Each pair should be represented as a two‑element tuple of indices. The function must correctly handle duplicate strings and an empty input list."
+ }
+]

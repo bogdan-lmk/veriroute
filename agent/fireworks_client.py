@@ -49,7 +49,7 @@ class TokenMeter:
         self.budget = (
             budget
             if budget is not None
-            else int(os.environ.get("AGENT_TOKEN_BUDGET", "15000"))
+            else int(os.environ.get("AGENT_TOKEN_BUDGET", "25000"))
         )
         self.prompt_tokens = 0
         self.completion_tokens = 0
