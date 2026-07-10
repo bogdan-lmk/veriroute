@@ -27,17 +27,14 @@ STUB = "A short video clip."
 
 
 def _fireworks_creds() -> tuple[str | None, str]:
-    """No secrets ship in the public image. Dev runs use env creds; graded
-    runs use our escalation relay (URL only — the key lives on our box and
-    dies with it). Relay unreachable -> the eye's local fallback covers it."""
+    """Fireworks-only. Use the grader-injected key + base URL, or stay fully
+    local. The container never connects anywhere but the injected
+    FIREWORKS_BASE_URL — no external routing, ever."""
     key = os.environ.get("FIREWORKS_API_KEY")
     if key:
         url = os.environ.get("FIREWORKS_BASE_URL",
                              "https://api.fireworks.ai/inference/v1")
         return key, url
-    relay = os.environ.get("ESCALATION_RELAY_URL")
-    if relay:
-        return "relay", relay  # non-secret placeholder token
     return None, ""
 
 

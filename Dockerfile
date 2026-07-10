@@ -43,8 +43,6 @@ COPY models/gemma-3-4b-it-Q4_K_M.gguf /app/gemma.gguf
 # Track 2 escalation goes through our relay: a URL is baked, the API key is
 # NOT — it lives on our box and the relay dies after the event. The Track 1
 # path never reads this; it uses harness-injected env only.
-ARG ESCALATION_RELAY_URL=""
-ENV ESCALATION_RELAY_URL=${ESCALATION_RELAY_URL}
 WORKDIR /app
 
 # Exec form: python is PID 1 and receives SIGTERM directly.
