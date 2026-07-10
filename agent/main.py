@@ -58,7 +58,8 @@ def _max_completion_tokens(model: str, category: str = "") -> int:
     if is_thinking_likely(model):
         base = int(os.environ.get("AGENT_MAX_TOKENS_THINKING", "1000"))
         if category in ("code_gen", "code_debug"):
-            return base * 2
+            # 2x still shipped a cut reasoning draft on one task; code pays 3x.
+            return base * 3
         return base
     if category in ("code_gen", "code_debug"):
         return int(os.environ.get("AGENT_MAX_COMPLETION_TOKENS", "300")) * 2
@@ -187,13 +188,20 @@ class Router:
                     model, prompt + TERSE_SUFFIX, max_tokens,
                     reasoning_effort=effort, timeout_s=budget_s,
                 )
-                if result.truncated and not self.client.meter.exhausted():
-                    # Reasoning ate the whole budget: exactly one paid retry.
+                needs_code = category in ("code_gen", "code_debug")
+                cut_draft = (result.finish_reason == "length"
+                             and needs_code and "def " not in result.content)
+                if (result.truncated or cut_draft) and not self.client.meter.exhausted():
+                    # Reasoning ate the budget (empty or a cut draft without
+                    # code): exactly one paid retry with more headroom.
                     log.warning("%s truncated by reasoning, one retry x2 tokens", model)
                     result = self.client.chat(
                         model, prompt + TERSE_SUFFIX, max_tokens * 2,
                         reasoning_effort=effort, timeout_s=budget_s,
                     )
+                if needs_code and "def " not in (result.content or ""):
+                    log.warning("escalated code answer has no def; trying next path")
+                    continue
                 answer = result.content.strip()
                 if answer:
                     return answer
