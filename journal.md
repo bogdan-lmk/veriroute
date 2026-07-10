@@ -279,3 +279,15 @@ so same accuracy, fewer tokens (~2.7k projected/19 vs escalate-all ~4.5k). Categ
 generalizes to the final scoring's new prompts. Aggressive variant (also local math/code_debug)
 gave NO benefit — those local paths reject and escalate anyway (measured: same 5 escalations).
 Image veriroute:shiphyb, branch ship/hybrid. Candidate to ship as the primary T1 submission.
+
+## SHIPPED: hybrid is now :duo (2026-07-10 ~19:10)
+
+Pushed hybrid as the primary T1 submission. Registry :duo digest 1282c4de:
+- AGENT_LLAMA_MODEL=/app/gemma.gguf baked (grader uses Gemma-4B router by default) — verified.
+- No RELAY references in image code — verified (grep -rc RELAY /app/agent => none). Fireworks-only.
+- Anonymous pull OK. Config: local Gemma sentiment/summ/ner; escalate factual/logic/math/code_debug/code_gen.
+Droplet had filled its disk (why earlier hybrid builds silently no-op'd); freed 29.7GB via
+docker system prune, rebuilt clean. USER ACTION: re-save submission to queue digest 1282c4de.
+FOLLOW-UP for the Gemma prize + manual review: the lablab Long Description still says
+"local Qwen2.5-1.5B answers sentiment/NER/summarization" — now it's Gemma-3-4B; update the
+narrative to match (strengthens Best Use of Gemma + audit clarity).
