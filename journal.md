@@ -232,3 +232,22 @@ TOKEN-TRIM (exp/trim-terse, e9b6e1a): trimmed TERSE_SUFFIX ~25->8 tokens. Eval 3
 accuracy held 31/32 96.9% (fail = factual-2 wrong year, model noise). BANKED for cycle 2 —
 NOT pushed. Ship only after escalate-all (503642da) confirms the gate on the real grader.
 Projection 19 tasks: ~4.45k tokens => rank ~12. Top-5 (<3.3k) needs FEWER escalations (risky local).
+
+## BREAKTHROUGH: evidence-based hybrid on REAL practice tasks (2026-07-10 ~18:15)
+
+Methodology fix (user's push): stop trusting my synthetic eval; use the 8 REAL organizer
+practice tasks (one per category) + manual verification. Ran local Gemma-3-4B on all 8:
+- gemma-local ALL-text: 6/8. FAILS: factual (Canberra -> "Jervis Bay", wrong; should be
+  Molonglo R./Lake Burley Griffin) and logic (pet puzzle -> "Lee", wrong; answer is Sam).
+  Correct: sentiment(Mixed), summarization, ner, code_debug, code_gen, math.
+=> The 4B's weak spots are FACTUAL (specific knowledge) and LOGIC (multi-step) — exactly the
+categories behind the 73.7% real score.
+HYBRID (local Gemma sentiment/summ/ner; escalate factual/logic/math/code_debug; code_gen
+self-test): re-ran on the 8 real tasks -> 8/8. factual now "Molonglo River" (correct), logic
+now "Sam owns the cat" (correct). 1,695 tokens/8 (3 local free, 5 escalated). Branch
+exp/hybrid-local (e84c8ee), image veriroute:hyb.
+Projection 19 tasks: ~3,000 tokens => rank ~6-7 at escalate-all accuracy. AGGRESSIVE next
+step: localize code_debug (gemma got practice-06 right) + math (PoT), escalate ONLY
+factual+logic -> ~1,700 tokens => top-3. Validate on practice tasks before shipping.
+SHIP ORDER unchanged: escalate-all confirms the gate (safety net) FIRST, then hybrid.
+Small-sample caveat: 8 practice tasks != 19 hidden; the real grader is the final judge.
