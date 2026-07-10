@@ -64,17 +64,15 @@ def _max_completion_tokens(model: str) -> int:
 
 # Only categories whose answers code can defend run locally; everything
 # else pays. (category -> local generation budget)
-# Eval 2026-07-10 (32 hidden-like tasks): local NER scored 0/4 (wrong entity
-# types, dropped dates) and local summarization 2/4 (lost key facts) — both
-# escalate now; sentiment held 3/4 and stays local.
-LOCAL_CATEGORIES: dict[str, int] = {
-    "sentiment": 110,
-}
-LOCAL_VERIFIERS = {
-    "sentiment": verifiers.verify_sentiment,
-}
+# Eval rounds 2026-07-10 (32 hidden-like tasks, judged): every purely-local
+# text category eventually lost to escalation — NER 0/4, summarization 2/4,
+# sentiment 3/4 twice (mixed/negative confusion), math-PoT 3/4 (compound
+# interest class). Escalated categories score 4/4. What stays local is what
+# code can PROVE: executed code tasks. Gate margin beats token rank.
+LOCAL_CATEGORIES: dict[str, int] = {}
+LOCAL_VERIFIERS: dict = {}
 # Execution-verified categories: the sandbox run IS the verifier.
-EXECUTED_CATEGORIES = ("math", "code_gen")
+EXECUTED_CATEGORIES = ("code_gen",)
 
 
 class Router:
@@ -143,8 +141,6 @@ class Router:
         # Prefixes are prewarmed at startup, so this window is generation
         # time only; 26s keeps the whole task under the 30s/request rule.
         gen_budget = max(5.0, min(budget_s - 3.0, 26.0))
-        if category == "math":
-            return pot.math_pot(local, prompt, gen_budget)
         return pot.codegen_selftested(local, prompt, gen_budget)
 
     def _try_local(self, category: str, prompt: str, budget_s: float) -> str | None:
