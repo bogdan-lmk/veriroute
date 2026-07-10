@@ -133,3 +133,24 @@ def codegen_selftested(local: LocalLLM, prompt: str, budget_s: float) -> str | N
         if not line.lstrip().startswith("assert")
     ).strip()
     return f"```python\n{solution}\n```"
+
+
+def codegen_best_effort(local: LocalLLM, prompt: str, budget_s: float) -> str | None:
+    """Unverified code draft for the last-resort path: when every verified
+    and escalated route failed, a plausible function beats an empty answer."""
+    try:
+        raw = local.chat(
+            _CODEGEN_PROMPT.format(prompt=prompt),
+            max_tokens=350, timeout_s=budget_s,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("best-effort codegen failed: %s", exc)
+        return None
+    block = extract_code(raw)
+    if "def " not in block:
+        return None
+    solution = "\n".join(
+        line for line in block.splitlines()
+        if not line.lstrip().startswith("assert")
+    ).strip()
+    return f"```python\n{solution}\n```"
