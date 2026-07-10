@@ -154,3 +154,20 @@ duo digest a4dc8f00. STRATEGY NOTE: gate now passes comfortably BUT we escalate 
 ~11k tokens on the 19-task set vs leader 3,864. Rank among passers will be low; the real
 grader's ALLOWED_MODELS (if it has non-thinking gemma-4) cuts completion tokens ~3x. Get the
 real board score first, THEN decide token-vs-gate tradeoff. Gate pass >> token rank.
+
+## INCIDENT: submission field reverted to :sub5 (2026-07-10 ~15:38)
+
+Re-saving the lablab wizard restored a STALE step-3 draft: Docker Image silently became
+ghcr.io/bogdan-lmk/veriroute:sub5 (old image: gate-failing T1 policy, NO captioner -> T2 dead).
+Lesson: verify the Docker Image field on EVERY re-save before final submit. Fix: set :duo,
+walk wizard to the end, Submit. Our card sits in DID NOT QUALIFY (88 entries) after the 47.4%.
+
+## Board intel (2026-07-10 15:53 GMT+3)
+
+T1: 49 scored, 88 DNQ. Top-5: yassai 1,992 @ 84.2% | Kestrel 2,138 @ 84.2% | YOLOAI_v6
+2,664 @ 84.2% | Metis 3,645 @ 100% | TOKENMAN 3,677 @ 94.7%.
+META CONFIRMED: top-3 sit EXACTLY on the gate (16/19) — they spend accuracy headroom for
+tokens. Winning number is now <2k tokens. Our duo ~11k/19 projected: gate-pass but bottom
+half. Post-verdict lever: re-enable the cheapest local categories up to the 3-miss budget
+(sentiment 3/4, math PoT 3/4 measured) + low-cap first-try escalation; one change per sub.
+T2: top scores 0.91/0.90/0.89/0.88/0.87/0.86 — dense; mid-field realistic for SmolVLM eye.
