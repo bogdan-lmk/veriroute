@@ -265,3 +265,17 @@ Track 2 now local-only if no key injected). Container is provably Fireworks-only
 STRATEGIC (same clarification): final scoring uses NEW randomized prompts -> overfit/hardcoded
 0-token leaders will DROP; our category-based routing (localize sentiment/summ/ner, escalate
 factual/logic — found on the 8 REAL practice tasks) GENERALIZES and carries to the final.
+
+## SHIP-READY hybrid validated in GRADER MODE (2026-07-10 ~18:50)
+
+ship/hybrid: relay-free + Gemma-3-4B baked as the default router (ENV AGENT_LLAMA_MODEL,
+AGENT_LOCAL_TIMEOUT_S=32) + LOCAL_CATEGORIES={sentiment,summarization,ner}. Ran on the 8 REAL
+practice tasks with ONLY grader-style env (key+base_url+allowed_models, no overrides) -> the
+baked gemma default engaged ("local model: on"), 3 local / 5 escalated, 1670 tokens/8, 115s.
+Manual verify: 8/8 correct (factual=Molonglo, logic=Sam, sentiment=Mixed, ner, summ, code all right).
+DOMINATES escalate-all: identical routing for the hard categories (factual/logic/math/code_debug
+all escalate) but sentiment/summ/ner answered locally by a capable 4B (validated on REAL tasks),
+so same accuracy, fewer tokens (~2.7k projected/19 vs escalate-all ~4.5k). Category-based =>
+generalizes to the final scoring's new prompts. Aggressive variant (also local math/code_debug)
+gave NO benefit — those local paths reject and escalate anyway (measured: same 5 escalations).
+Image veriroute:shiphyb, branch ship/hybrid. Candidate to ship as the primary T1 submission.
