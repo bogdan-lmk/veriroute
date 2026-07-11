@@ -309,3 +309,17 @@ cues (gist, "pull out people/places", "reviewer happy/upset"). Result (validated
 Ships in :duo digest 41eeaa03. This is the win lever for the FINAL round (new randomized
 prompts): accuracy generalizes (any-phrasing factual/logic escalate) AND tokens generalize
 (any-phrasing genuine local tasks stay local). USER: re-save to queue 41eeaa03.
+
+## REAL GRADER VERDICT: 100.0% accuracy, 5,735 tokens (scored 2026-07-11 20:09)
+
+Hybrid :duo (41eeaa03, hardened classifier) scored by the REAL grader:
+- ACCURACY 100.0% = 19/19. GATE PASSED WITH MAXIMUM SCORE. (47.4% -> 73.7% -> 100%.)
+- Tokens 5,735 vs predicted ~4k: hardened classifier escalates conservatively (varied
+  phrasings on the hidden set escalate more than practice) — accuracy margin bought with
+  tokens, exactly the intended trade under a noisy judge.
+- Prediction record: gate-jump predicted (correct), token estimate low by ~40%.
+Diagnosis chain CONFIRMED end-to-end: local weak-text answers were the gate killer; category
+routing + reasoning_effort=none + local Gemma only where measured-safe = perfect score.
+On the Jul-10 board snapshot 5,735 ranks ~6th among 100%-accuracy entries (~top-20 overall).
+What decides prizes now: the FINAL re-scoring on new randomized prompts (overfit 0-token
+leaders should collapse; our config generalizes by design) + manual review + Gemma prize.
