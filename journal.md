@@ -323,3 +323,18 @@ routing + reasoning_effort=none + local Gemma only where measured-safe = perfect
 On the Jul-10 board snapshot 5,735 ranks ~6th among 100%-accuracy entries (~top-20 overall).
 What decides prizes now: the FINAL re-scoring on new randomized prompts (overfit 0-token
 leaders should collapse; our config generalizes by design) + manual review + Gemma prize.
+
+## FINAL BOARD (new randomized prompts) — prediction confirmed (2026-07-11 ~20:30)
+
+The board was re-scored on the refreshed prompt set after close. Outcome:
+- WE HOLD 100.0% ON THE FINAL REFRESH — one of only 7 teams with a perfect score (Kestrel
+  2520, LocalFirst-4 3753, OmniEdge 3791, TokenRouter 4454, TokenForge 5173, TERA 5443,
+  Momentum 5735). ~27th by tokens among gate-passers, 7th among perfect scores.
+- The overfit dynamic played out EXACTLY as predicted: the 0-token leader sits at 68.4%
+  (below the 80% gate); the old top-3 gate-riders (yassai/Metis/YOLOAI, 84.2% at minimal
+  tokens) vanished from the top; DNQ ballooned 97 -> 207. Generalization was the win lever.
+- Category-based routing + supplied-text grounding + reasoning-off survived the refresh
+  without losing a single task. The methodology (measure on real signals, one change per
+  cycle, generalize don't overfit) is validated end-to-end.
+Remaining externals: manual review + prize decisions (Gemma prize = our strongest shot:
+local Gemma powers both tracks), T2 tab score TBD. Post-event security checklist is now due.
